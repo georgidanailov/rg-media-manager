@@ -24,5 +24,3 @@
 /assets/vendor/
 ###< symfony/asset-mapper ###
 .idea
-.env
-.env.test
