@@ -23,5 +23,7 @@
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
-.idea
-.env.local
+.idea/
+.env.local/
+.DS_Store/
+src/.DS_Store/
