@@ -13,6 +13,9 @@
                 {% if app.user %}
                     <div class="alert alert-info mb-3">
                         You are logged in as {{ app.user.userIdentifier }}.
+                        {% for role in app.user.roles %}
+                        <p>{{ role }}</p>
+                        {% endfor %}
                         <a href="{{ path('app_logout') }}" class="alert-link">Logout</a>
                     </div>
                 {% endif %}
