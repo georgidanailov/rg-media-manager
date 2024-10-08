@@ -3,11 +3,12 @@
 namespace App\Entity;
 
 use App\Enum\FileType;
+use Doctrine\ORM\Mapping as ORM;
 use App\Repository\MediaRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
-use Doctrine\ORM\Mapping as ORM;
+
 
 #[ORM\Entity(repositoryClass: MediaRepository::class)]
 class Media
