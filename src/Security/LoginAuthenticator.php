@@ -2,10 +2,13 @@
 
 namespace App\Security;
 
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Http\Authenticator\AbstractLoginFormAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
@@ -21,9 +24,13 @@ class LoginAuthenticator extends AbstractLoginFormAuthenticator
     use TargetPathTrait;
 
     public const LOGIN_ROUTE = 'app_login';
+    private $router;
+    private $jwtManager;
 
-    public function __construct(private UrlGeneratorInterface $urlGenerator)
+    public function __construct(private UrlGeneratorInterface $urlGenerator, JWTTokenManagerInterface $jwtManager, RouterInterface $router)
     {
+        $this->router = $router;
+        $this->jwtManager = $jwtManager;
     }
 
     public function authenticate(Request $request): Passport
@@ -44,13 +51,22 @@ class LoginAuthenticator extends AbstractLoginFormAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
-            return new RedirectResponse($targetPath);
-        }
 
-        // For example:
-        return new RedirectResponse($this->urlGenerator->generate('app_login'));
-        //throw new \Exception('TODO: provide a valid redirect inside '.__FILE__);
+        $user = $token->getUser();
+        $jwtToken = $this->jwtManager->create($user);
+        $response = new RedirectResponse($this->router->generate('dashboard'));
+        $response->headers->set('Authorization', 'Bearer ' . $jwtToken);
+
+
+        return $response;
+
+//        if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
+//            return new RedirectResponse($targetPath);
+//        }
+//
+//        // For example:
+//        return new RedirectResponse($this->urlGenerator->generate('dashboard'));
+//        //throw new \Exception('TODO: provide a valid redirect inside '.__FILE__);
     }
 
     protected function getLoginUrl(Request $request): string

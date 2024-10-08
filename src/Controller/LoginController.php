@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTManager;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -12,6 +14,12 @@ class LoginController extends AbstractController
     #[Route(path: '/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
+
+        //$user = $this->getUser();
+
+        //$token = $jwtManager->create($user);
+
+
         // if ($this->getUser()) {
         //     return $this->redirectToRoute('target_path');
         // }
