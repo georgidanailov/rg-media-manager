@@ -13,6 +13,7 @@ class MediaController extends AbstractController
     #[Route('/media', name: 'get_all_media')]
     public function getMedia(EntityManagerInterface $em): JsonResponse
     {
+        
         $media = $em->getRepository(Media::class)->findAll();
         return $this->json($media, 200 );
     }
