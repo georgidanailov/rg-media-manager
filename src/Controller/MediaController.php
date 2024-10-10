@@ -64,7 +64,7 @@ class MediaController extends AbstractController
     public function uploadMedia(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): JsonResponse
     {
         $file = $request->files->get('file');
-        $user = $em->getRepository(User::class)->find(1);
+        $user = $em->getRepository(User::class)->find(2);
 
         if (!$file instanceof UploadedFile) {
             return new JsonResponse(['error' => 'No file provided or invalid file'], Response::HTTP_BAD_REQUEST);
@@ -94,6 +94,14 @@ class MediaController extends AbstractController
 
         if (!in_array($file->getMimeType(), $allowedMimeTypes)) {
             return new JsonResponse(['error' => 'Unsupported file type'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $filePath = $file->getPathname();
+
+        $scanResult = shell_exec('clamscan ' . escapeshellarg($filePath));
+
+        if(!strpos($scanResult, 'Infected files: 0')){
+            return new JsonResponse(['error' => 'Infected files found'], Response::HTTP_BAD_REQUEST);
         }
 
         $fileType = match (true) {
