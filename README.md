@@ -96,3 +96,15 @@ To run unit tests and other automated tests, use the following command:
 ```bash
 php bin/phpunit
 ```
+
+### API Documentation
+
+API Documentation
+This project uses NelmioApiDocBundle to generate API documentation in the OpenAPI format.
+
+Viewing the API Documentation
+To view the API documentation in your browser, simply visit the following URL after starting the Symfony server:
+
+```bash
+https://127.0.0.1:8000/api/doc
+```

@@ -58,7 +58,6 @@ class MediaController extends AbstractController
         $file = $request->files->get('file');
         $user = $em->getRepository(User::class)->find(1);
 
-
         if (!$file instanceof UploadedFile) {
             return new JsonResponse(['error' => 'No file provided or invalid file'], Response::HTTP_BAD_REQUEST);
         }
@@ -90,6 +89,7 @@ class MediaController extends AbstractController
             'application/zip',                  // ZIP
             'application/x-rar-compressed',      // RAR
         ];
+
 
         if (!in_array($file->getMimeType(), $allowedMimeTypes)) {
             return new JsonResponse(['error' => 'Unsupported file type'], Response::HTTP_BAD_REQUEST);
@@ -136,6 +136,7 @@ class MediaController extends AbstractController
         if ($fileType === FileType::IMAGE) {
             $media->setThumbnailPath($uploadDir . '/thumbnails/' . $newFilename);
         }
+
 
         try {
             $file->move($uploadDir, $newFilename);
