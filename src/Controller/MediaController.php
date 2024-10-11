@@ -66,7 +66,7 @@ class MediaController extends AbstractController
     public function uploadMedia(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): JsonResponse
     {
         $file = $request->files->get('file');
-        $user = $em->getRepository(User::class)->find(1);
+        $user = $em->getRepository(User::class)->find(2);
 
 
 
@@ -111,7 +111,14 @@ class MediaController extends AbstractController
         $scanResult = shell_exec('clamscan ' . escapeshellarg($filePath));
 
         if(!strpos($scanResult, 'Infected files: 0')){
-            return new JsonResponse(['error' => 'Infected files found'], Response::HTTP_BAD_REQUEST);
+            $user->setInfectedFileCount($user->getInfectedFileCount()+1);
+            $em->persist($user);
+            if($user->getInfectedFileCount() >= 3){
+                $user->setLocked(true);
+            }
+            $em->flush();
+
+            return new JsonResponse(['error' => 'Infected files found. Your account might get locked if you continue!'], Response::HTTP_BAD_REQUEST);
         }
 
         $fileType = match (true) {
