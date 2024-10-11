@@ -6,7 +6,7 @@ use App\Entity\Media;
 use App\Entity\Metadata;
 use App\Entity\User;
 use App\Enum\FileType;
-use App\Service\MediaProcessingService; // Import the MediaProcessingService
+use App\Service\MediaProcessingService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
+
 
 class MediaController extends AbstractController
 {
@@ -30,6 +31,7 @@ class MediaController extends AbstractController
     #[Route('/media', name: 'get_all_media')]
     public function getMedia(EntityManagerInterface $em): JsonResponse
     {
+
         $media = $em->getRepository(Media::class)->findAll();
         return $this->json($media, 200);
     }
@@ -64,7 +66,9 @@ class MediaController extends AbstractController
     public function uploadMedia(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): JsonResponse
     {
         $file = $request->files->get('file');
-        $user = $em->getRepository(User::class)->find(2);
+        $user = $em->getRepository(User::class)->find(1);
+
+
 
         if (!$file instanceof UploadedFile) {
             return new JsonResponse(['error' => 'No file provided or invalid file'], Response::HTTP_BAD_REQUEST);
@@ -74,22 +78,28 @@ class MediaController extends AbstractController
             'image/gif',
             'image/jpeg',
             'image/png',
-            'video/quicktime',
-            'video/mpeg',
-            'video/x-msvideo',
-            'video/mp4',
-            'video/x-ms-wmv',
-            'video/x-matroska',
-            'video/divx',
-            'application/pdf',
-            'application/msword',
-            'application/vnd.ms-excel',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'application/vnd.ms-powerpoint',
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'application/zip',
-            'application/x-rar-compressed',
+
+
+            'video/quicktime',          // MOV
+            'video/mpeg',               // MPG
+            'video/x-msvideo',          // AVI
+            'video/mp4',                // MP4
+            'video/x-ms-wmv',           // WMV
+            'video/x-matroska',         // MKV
+            'video/divx',               // DIVX
+
+
+            'application/pdf',                    // PDF
+            'application/msword',                 // DOC
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',  // DOCX
+            'application/vnd.ms-excel',    // XLS
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',        // XLSX
+            'application/vnd.ms-powerpoint',   // PPT
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation', // PPTX
+
+
+            'application/zip',                  // ZIP
+            'application/x-rar-compressed',      // RAR
         ];
 
         if (!in_array($file->getMimeType(), $allowedMimeTypes)) {
@@ -112,6 +122,8 @@ class MediaController extends AbstractController
             default => null
         };
 
+
+
         if (!$fileType) {
             return new JsonResponse(['error' => 'Unable to determine file type'], Response::HTTP_BAD_REQUEST);
         }
@@ -120,11 +132,13 @@ class MediaController extends AbstractController
             FileType::IMAGE => 5000000,
             FileType::VIDEO, FileType::ARCHIVE => 50000000,
             FileType::DOCUMENT => 10000000,
+
         };
 
         if ($file->getSize() > $maxFileSize) {
             return new JsonResponse(['error' => 'File is too large'], Response::HTTP_BAD_REQUEST);
         }
+
 
         $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $safeFilename = $slugger->slug($originalFilename);
@@ -140,9 +154,10 @@ class MediaController extends AbstractController
         $media->setFileType($fileType);
         $media->setCreatedAt(new \DateTime('now'));
 
-        if ($fileType === FileType::IMAGE) {
-            $media->setThumbnailPath($uploadDir . '/thumbnails/' . $newFilename);
+        if ($fileType === FileType::IMAGE || $fileType === FileType::VIDEO) {
+            $media->setThumbnailPath($uploadDir . '/uploads/thumbnails/' . $newFilename);
         }
+
 
         try {
             $file->move($uploadDir, $newFilename);
@@ -159,6 +174,7 @@ class MediaController extends AbstractController
         $this->saveMediaMetadata($media, $em);
 
         return new JsonResponse(['success' => 'file created'], Response::HTTP_OK);
+
     }
 
     private function saveMediaMetadata(Media $media, EntityManagerInterface $em): void
@@ -177,6 +193,7 @@ class MediaController extends AbstractController
         }
 
         if ($media->getFileType() == FileType::VIDEO) {
+
             $ffmpegCommand = 'ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 ' . escapeshellarg($filePath);
             $resolution = exec($ffmpegCommand);
             if ($resolution) {
@@ -185,6 +202,7 @@ class MediaController extends AbstractController
                     'value' => $resolution
                 ];
             }
+
 
             $durationCommand = 'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 ' . escapeshellarg($filePath);
             $duration = exec($durationCommand);
@@ -201,11 +219,16 @@ class MediaController extends AbstractController
             $metadataEntity->setFileId($media);
             $metadataEntity->setDataType($meta['data_type']);
             $metadataEntity->setValue($meta['value']);
+
             $em->persist($metadataEntity);
+
         }
 
         $em->flush();
+
     }
+
+
 
     #[Route('/media/{id}/upload', name: 'edit_media')]
     public function editMedia(Request $request, EntityManagerInterface $em, Media $m): JsonResponse
