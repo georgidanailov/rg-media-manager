@@ -43,6 +43,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $used_storage = null;
 
+    #[ORM\Column]
+    private ?int $infectedFileCount = null;
+
+    #[ORM\Column]
+    private ?bool $isLocked = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -150,6 +156,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setUsedStorage(?string $used_storage): static
     {
         $this->used_storage = $used_storage;
+
+        return $this;
+    }
+
+    public function getInfectedFileCount(): ?int
+    {
+        return $this->infectedFileCount;
+    }
+
+    public function setInfectedFileCount(int $infectedFileCount): static
+    {
+        $this->infectedFileCount = $infectedFileCount;
+
+        return $this;
+    }
+
+    public function isLocked(): ?bool
+    {
+        return $this->isLocked;
+    }
+
+    public function setLocked(bool $isLocked): static
+    {
+        $this->isLocked = $isLocked;
 
         return $this;
     }

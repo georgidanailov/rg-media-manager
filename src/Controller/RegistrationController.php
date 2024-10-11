@@ -31,6 +31,8 @@ class RegistrationController extends AbstractController
             $user->setQuota(100);
             $user->setUsedStorage(90);
             $user->setRoles(['ROLE_USER']);
+            $user->setInfectedFileCount(0);
+            $user->setLocked(false);
 
             $entityManager->persist($user);
             $entityManager->flush();
