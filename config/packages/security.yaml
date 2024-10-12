@@ -18,6 +18,17 @@ security:
         # used to reload user from session & other features (e.g. switch_user)
         # used to reload user from session & other features (e.g. switch_user)
     firewalls:
+        media:
+            pattern: ^/media
+            stateless: true
+            provider: app_user_provider
+            jwt: ~
+        medias:
+            pattern: ^/medias
+            stateless: true
+            provider: app_user_provider
+            jwt: ~
+
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
@@ -53,8 +64,8 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
         - { path: ^/api/token, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-#        - { path: ^/media, roles: IS_AUTHENTICATED_FULLY }
-#        - { path: ^/medias, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/media, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/medias, roles: IS_AUTHENTICATED_FULLY }
 #        - { path: ^/dashboard, roles: IS_AUTHENTICATED_FULLY }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
