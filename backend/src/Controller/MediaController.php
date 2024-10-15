@@ -66,7 +66,7 @@ class MediaController extends AbstractController
     public function uploadMedia(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): JsonResponse
     {
         $file = $request->files->get('file');
-        $user = $em->getRepository(User::class)->find(2);
+        $user = $em->getRepository(User::class)->find(1);
 
 
 

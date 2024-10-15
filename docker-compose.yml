@@ -1,0 +1,94 @@
+services:
+  # Backend (Symfony)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: symfony_php
+    volumes:
+      - ./backend:/var/www/symfony
+    environment:
+      - APP_ENV=dev
+    networks:
+      - app_network
+
+  # Database
+  database:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: RGMediaManager
+      MYSQL_USER: root
+      MYSQL_PASSWORD: password
+    volumes:
+      - database_data:/var/lib/mysql
+    networks:
+      - app_network
+    ports:
+      - "3308:3306"
+
+  # Nginx for Symfony
+  nginx:
+    image: nginx:alpine
+    container_name: symfony_nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend/nginx:/etc/nginx/conf.d
+      - ./backend:/var/www/symfony
+    depends_on:
+      - backend
+    networks:
+      - app_network
+
+  # Frontend (React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: react_frontend
+    ports:
+      - "3000:80"
+    networks:
+      - app_network
+
+  # Mailer
+  mailer:
+    image: axllent/mailpit
+    ports:
+      - "1025"
+      - "8025"
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    networks:
+      - app_network
+
+  # ClamAV
+  clamav:
+    image: mkodockx/docker-clamav:alpine
+    ports:
+      - "3310:3310"
+    networks:
+      - app_network
+
+  # RabbitMQ for Symfony Messenger
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # RabbitMQ connection port
+      - "15672:15672" # RabbitMQ management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  database_data:
+  clamav_data:
