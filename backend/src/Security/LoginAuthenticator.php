@@ -24,8 +24,8 @@ class LoginAuthenticator extends AbstractLoginFormAuthenticator
     use TargetPathTrait;
 
     public const LOGIN_ROUTE = 'app_login';
-    private $router;
-    private $jwtManager;
+    private RouterInterface $router;
+    private JWTTokenManagerInterface $jwtManager;
 
     public function __construct(private UrlGeneratorInterface $urlGenerator, JWTTokenManagerInterface $jwtManager, RouterInterface $router)
     {

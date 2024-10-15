@@ -1,110 +1,87 @@
-# **Media Manager Service**
+How to Set Up Locally
 
-The **Media Manager Service** is a web-based platform that allows users to upload, manage, and retrieve media files. This documentation will guide you through setting up and running the project in a local development environment.
+1. Clone the repository
 
-## **Prerequisites**
+git clone https://github.com/your-repo/mediaManager.git
+cd mediaManager
+2. Configure Environment Variables
+You need to configure your .env.local file in the backend/ directory. Example:
 
-To run the **Media Manager Service**, you need the following installed on your system:
+bash
+Copy code
+DATABASE_URL="mysql://root:password@database:3308/RGMediaManager?serverVersion=8.0.32&charset=utf8mb4"
 
-- **PHP 8.2** or higher
-- **Composer** (PHP Dependency Manager)
-- **MySQL** or any supported relational database
-- **OpenSSL** (for generating JWT keys)
+Make sure to setup your own details:
+MySQL Database
+MYSQL_ROOT_PASSWORD=root
+MYSQL_DATABASE=RGMediaManager
+MYSQL_USER=root
+MYSQL_PASSWORD=password
+Make sure the ports and credentials match those in docker-compose.yml.
 
-## **Installation**
+3. Build and Run Docker Containers
+Run the following command to build and start all the containers:
 
-### **1. Clone the Repository**
-First, clone the repository to your local machine:
+bash
+Copy code
+docker-compose up --build
+4. Access the Services
+Backend (Symfony): http://localhost:8000
+Frontend (React): http://localhost:3000
+Mailpit: http://localhost:8025
+5. Database Persistence
+The MySQL database is persisted using Docker volumes. This means that even if you stop or restart the containers, your data will be preserved.
 
-```bash
-git clone https://github.com/your-organization/media-manager.git
-cd media-manager
-```
-### 2. Install PHP Dependencies
-Run the following command to install all the necessary PHP dependencies using Composer:
+Volume for MySQL data: database_data
+To check if the database is persisting data, run:
 
-```bash
-composer install
-```
+bash
+Copy code
+docker volume inspect mediaManager_database_data
+6. ClamAV Configuration
+ClamAV is set to scan and update virus definitions. If you want to adjust the scanning interval and reduce log noise, you can update the clamd.conf and freshclam.conf files in the clamav/ directory.
 
-### Configuration
-1. Copy Environment Configuration
-The project includes a .env file template that needs to be copied and adjusted for your local environment:
+Example freshclam.conf:
+bash
+Copy code
+DatabaseDirectory /var/lib/clamav
+UpdateLogFile /var/log/clamav/freshclam.log
+Checks 1
+DatabaseMirror database.clamav.net
+Example clamd.conf:
+bash
+Copy code
+DatabaseDirectory /var/lib/clamav
+LogFile /var/log/clamav/clamd.log
+SelfCheck 3600
+ScanMail yes
+ScanOLE2 yes
+ScanPDF yes
+ScanArchive yes
+Common Docker Commands
+Stop all services:
 
-```bash
-cp .env .env.local
-```
-2. Update .env.local
-Open .env.local and update the following variables to match your local environment setup:
+bash
+Copy code
+docker-compose down
+Rebuild containers:
 
-```bash
-DATABASE_URL="mysql://db_user:db_password@127.0.0.1:3306/media_manager"
-APP_ENV=dev
-APP_DEBUG=true
-APP_SECRET=your_secret_key
-```
+bash
+Copy code
+docker-compose up --build
+View logs:
 
-# JWT Configuration (replace with your generated key passphrase)
-```bash
-JWT_PASSPHRASE="your_passphrase"
-```
-3. Generate JWT Keys
-The Media Manager uses JWT for authentication. You will need to generate a private and public key for this:
+bash
+Copy code
+docker-compose logs -f
+Troubleshooting
+Nginx Errors
+If you encounter Nginx configuration errors (e.g., related to worker_processes or user), ensure the nginx/default.conf file is properly configured. Nginx-specific directives like user should not be inside the conf.d/default.conf file.
 
-```bash
-mkdir -p config/jwt
-openssl genrsa -out config/jwt/private.pem -aes256 4096
-openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
-```
-When prompted, enter the same passphrase as the one used in your .env.local file for JWT_PASSPHRASE.
+ClamAV Issues
+ClamAV may frequently attempt to update virus definitions. If SSL issues occur, consider updating your freshclam.conf to disable SSL verification:
 
-# Database Setup
-1. Create the Database
-Run the following command to create the database:
-
-```bash
-php bin/console doctrine:database:create
-```
-2. Run Migrations
-Run the database migrations to set up the schema:
-
-```bash
-php bin/console doctrine:migrations:migrate
-```
-3. Load Initial Data
-If there are fixtures or sample data available, load them using the following command:
-
-```bash
-php bin/console doctrine:fixtures:load
-```
-## Running the Application
-1. Start the Symfony Server
-To start the Symfony development server, run:
-
-```bash
-symfony server:start
-```
-Alternatively, you can use the PHP built-in server:
-
-```bash
-php -S localhost:8000 -t public/
-```
-## Testing
-1. Running PHPUnit Tests
-To run unit tests and other automated tests, use the following command:
-
-```bash
-php bin/phpunit
-```
-
-### API Documentation
-
-API Documentation
-This project uses NelmioApiDocBundle to generate API documentation in the OpenAPI format.
-
-Viewing the API Documentation
-To view the API documentation in your browser, simply visit the following URL after starting the Symfony server:
-
-```bash
-https://127.0.0.1:8000/api/doc
-```
+bash
+Copy code
+DatabaseMirror database.clamav.net
+DNSDatabaseInfo current.cvd.clamav.net

@@ -3,11 +3,25 @@
 namespace App\Service;
 
 use App\Entity\Media;
-use App\Enum\FileType;
+use App\Message\ProcessMediaMessage;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 class MediaProcessingService
 {
+    private MessageBusInterface $bus;
+
+    public function __construct(MessageBusInterface $bus)
+    {
+        $this->bus = $bus;
+    }
+
     public function processMedia(Media $media, string $uploadDir): void
+    {
+        // Dispatch a message to process media asynchronously
+        $this->bus->dispatch(new ProcessMediaMessage($media, $uploadDir));
+    }
+
+    public function handleMediaProcessing(Media $media, string $uploadDir): void
     {
         $filePath = $uploadDir . $media->getStoragePath();
 
