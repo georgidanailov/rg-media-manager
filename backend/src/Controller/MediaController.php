@@ -6,6 +6,7 @@ use App\Entity\Media;
 use App\Entity\Metadata;
 use App\Entity\User;
 use App\Enum\FileType;
+use App\Message\ScanFileMessage;
 use App\Service\MediaProcessingService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -14,6 +15,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
@@ -63,7 +65,7 @@ class MediaController extends AbstractController
     }
 
     #[Route('/medias/upload', name: 'upload_media', methods: ['POST'])]
-    public function uploadMedia(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): JsonResponse
+    public function uploadMedia(Request $request, EntityManagerInterface $em, SluggerInterface $slugger, MessageBusInterface $messageBus): JsonResponse
     {
         $file = $request->files->get('file');
         $user = $em->getRepository(User::class)->find(1);
@@ -109,18 +111,8 @@ class MediaController extends AbstractController
 
         $filePath = $file->getPathname();
 
-        $scanResult = shell_exec('clamscan ' . escapeshellarg($filePath));
+        $messageBus->dispatch(new ScanFileMessage($filePath, $this->getUser()->getId()));
 
-        if(!strpos($scanResult, 'Infected files: 0')){
-            $user->setInfectedFileCount($user->getInfectedFileCount()+1);
-            $em->persist($user);
-            if($user->getInfectedFileCount() >= 3){
-                $user->setLocked(true);
-            }
-            $em->flush();
-
-            return new JsonResponse(['error' => 'Infected files found. Your account might get locked if you continue!'], Response::HTTP_BAD_REQUEST);
-        }
 
         $fileType = match (true) {
             str_contains($file->getMimeType(), 'image') => FileType::IMAGE,
