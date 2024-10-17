@@ -16,16 +16,14 @@ services:
   database:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: RGMediaManager
-      MYSQL_USER: root
-      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: dandarcho1
+      MYSQL_DATABASE: filemanager
     volumes:
       - database_data:/var/lib/mysql
     networks:
       - app_network
     ports:
-      - "3308:3306"
+      - "3307:3306"
 
   # Nginx for Symfony
   nginx:
@@ -34,7 +32,7 @@ services:
     ports:
       - "8000:80"
     volumes:
-      - ./backend/nginx:/etc/nginx/conf.d
+      - ./nginx:/etc/nginx/conf.d
       - ./backend:/var/www/symfony
     depends_on:
       - backend
