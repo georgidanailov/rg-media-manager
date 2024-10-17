@@ -28,7 +28,7 @@ class MediaController extends AbstractController
         $this->mediaProcessingService = $mediaProcessingService;
     }
 
-    #[Route('/media', name: 'get_all_media')]
+    #[Route('/media', name: 'get_all_media', methods: ['GET'])]
     public function getMedia(EntityManagerInterface $em): JsonResponse
     {
 
@@ -99,7 +99,8 @@ class MediaController extends AbstractController
 
 
             'application/zip',                  // ZIP
-            'application/x-rar-compressed',      // RAR
+            'application/x-rar-compressed', //RAR
+            'application/vnd.rar', // RAR
         ];
 
         if (!in_array($file->getMimeType(), $allowedMimeTypes)) {
@@ -126,6 +127,14 @@ class MediaController extends AbstractController
             str_contains($file->getMimeType(), 'video') => FileType::VIDEO,
             str_contains($file->getMimeType(), 'application/pdf') => FileType::DOCUMENT,
             str_contains($file->getMimeType(), 'application/zip') => FileType::ARCHIVE,
+            str_contains($file->getMimeType(), 'application/vnd.rar') => FileType::ARCHIVE,
+            str_contains($file->getMimeType(), 'application/x-rar-compressed') => FileType::ARCHIVE,
+            str_contains($file->getMimeType(), 'application/msword') => FileType::DOCUMENT,
+            str_contains($file->getMimeType(), 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') => FileType::DOCUMENT,
+            str_contains($file->getMimeType(), 'application/vnd.ms-excel') => FileType::DOCUMENT,
+            str_contains($file->getMimeType(), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') => FileType::DOCUMENT,
+            str_contains($file->getMimeType(), 'application/vnd.ms-powerpoint') => FileType::DOCUMENT,
+            str_contains($file->getMimeType(), 'application/vnd.openxmlformats-officedocument.presentationml.presentation') => FileType::DOCUMENT,
             default => null
         };
 
@@ -184,6 +193,7 @@ class MediaController extends AbstractController
 
     }
 
+
     private function saveMediaMetadata(Media $media, EntityManagerInterface $em): void
     {
         $metadata = [];
@@ -220,6 +230,18 @@ class MediaController extends AbstractController
                 ];
             }
         }
+
+        if ($media->getFileType() == FileType::ARCHIVE) {
+            $zipFileCountCommand = 'unzip -l ' . escapeshellarg($filePath) . ' | grep -c "^[ ]*[0-9]"';
+            $fileCount = exec($zipFileCountCommand);
+            if ($fileCount) {
+                $metadata[] = [
+                    'data_type' => 'file_count',
+                    'value' => $fileCount
+                ];
+            }
+        }
+
 
         foreach ($metadata as $meta) {
             $metadataEntity = new Metadata();
