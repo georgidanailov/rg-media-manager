@@ -26,6 +26,7 @@ framework:
             Symfony\Component\Notifier\Message\SmsMessage: async
 
             App\Message\ProcessMediaMessage: async
+            App\Message\ScanFileMessage: async
 
             # Route your messages to the transports
             # 'App\Message\YourMessage': async

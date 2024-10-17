@@ -16,8 +16,8 @@ services:
   database:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: dandarcho1
-      MYSQL_DATABASE: filemanager
+      MYSQL_ROOT_PASSWORD: 11111111
+      MYSQL_DATABASE: RGMediaManager
     volumes:
       - database_data:/var/lib/mysql
     networks:
