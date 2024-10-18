@@ -5,6 +5,7 @@ FROM php:8.3-fpm
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
+    ffmpeg \
     libfreetype6-dev \
     libzip-dev \
     zip \
@@ -15,6 +16,11 @@ RUN apt-get update && apt-get install -y \
 # Install PHP extensions, including exif
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo pdo_mysql gd zip exif
+
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+RUN sed -E -i -e 's/post_max_size = 8M/post_max_size = 128M/' $PHP_INI_DIR/php.ini
+RUN sed -E -i -e 's/upload_max_filesize = 2M/upload_max_filesize = 128M/' $PHP_INI_DIR/php.ini
+RUN sed -E -i -e 's/max_execution_time = 30/max_execution_time = 60/' $PHP_INI_DIR/php.ini
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
