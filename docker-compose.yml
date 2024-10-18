@@ -7,6 +7,7 @@ services:
     container_name: symfony_php
     volumes:
       - ./backend:/var/www/symfony
+      - ./php.ini:/etc/phpINI/php.ini
     environment:
       - APP_ENV=dev
     networks:
@@ -70,18 +71,29 @@ services:
     networks:
       - app_network
 
-  # RabbitMQ for Symfony Messenger
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    ports:
-      - "5672:5672"   # RabbitMQ connection port
-      - "15672:15672" # RabbitMQ management UI
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+  worker:
+    image: rg-media-manager-backend:latest
+    container_name: symfony_worker
+    command: php bin/console messenger:consume async --time-limit=3600 --memory-limit=128M
+    depends_on:
+      - backend
+    volumes:
+      - ./backend:/var/www/symfony
     networks:
       - app_network
+
+  # RabbitMQ for Symfony Messenger
+#  rabbitmq:
+#    image: rabbitmq:3-management
+#    container_name: rabbitmq
+#    ports:
+#      - "5672:5672"   # RabbitMQ connection port
+#      - "15672:15672" # RabbitMQ management UI
+#    environment:
+#      RABBITMQ_DEFAULT_USER: guest
+#      RABBITMQ_DEFAULT_PASS: guest
+#    networks:
+#      - app_network
 
 networks:
   app_network:

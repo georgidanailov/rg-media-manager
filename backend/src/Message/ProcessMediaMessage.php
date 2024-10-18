@@ -2,6 +2,12 @@
 
 namespace App\Message;
 
+use App\Service\MediaProcessingService;
+
+// src/Message/ProcessMediaMessage.php
+
+namespace App\Message;
+
 use App\Entity\Media;
 
 class ProcessMediaMessage

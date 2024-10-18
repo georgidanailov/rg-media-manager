@@ -4,9 +4,10 @@ namespace App\MessageHandler;
 
 use App\Message\ProcessMediaMessage;
 use App\Service\MediaProcessingService;
-use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
+use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
-class ProcessMediaMessageHandler implements MessageHandlerInterface
+#[AsMessageHandler]
+class ProcessMediaMessageHandler
 {
     private MediaProcessingService $mediaProcessingService;
 
@@ -17,11 +18,9 @@ class ProcessMediaMessageHandler implements MessageHandlerInterface
 
     public function __invoke(ProcessMediaMessage $message): void
     {
-        // Get media and upload directory from the message
         $media = $message->getMedia();
         $uploadDir = $message->getUploadDir();
 
-        // Process the media asynchronously
         $this->mediaProcessingService->handleMediaProcessing($media, $uploadDir);
     }
 }

@@ -7,6 +7,7 @@ use App\Entity\Metadata;
 use App\Entity\User;
 use App\Enum\FileType;
 use App\Message\ScanFileMessage;
+use App\Message\ProcessMediaMessage;
 use App\Service\MediaProcessingService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -69,7 +70,6 @@ class MediaController extends AbstractController
     {
         $file = $request->files->get('file');
         $user = $em->getRepository(User::class)->find(1);
-
 
 
         if (!$file instanceof UploadedFile) {
@@ -177,7 +177,7 @@ class MediaController extends AbstractController
         $em->flush();
 
         // Call media processing service after file upload
-        $this->mediaProcessingService->processMedia($media, $uploadDir);
+        $messageBus->dispatch(new ProcessMediaMessage($media, $uploadDir));
 
         $this->saveMediaMetadata($media, $em);
 
