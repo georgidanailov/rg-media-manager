@@ -32,12 +32,101 @@ class MediaController extends AbstractController
     }
 
     #[Route('/media', name: 'get_all_media', methods: ['GET'])]
-    public function getMedia(EntityManagerInterface $em): JsonResponse
+    public function getMedia(Request $request, EntityManagerInterface $em): JsonResponse
     {
+        $user = $em->getRepository(User::class)->find(1);
+        $criteria = [];
 
-        $media = $em->getRepository(Media::class)->findAll();
-        return $this->json($media, 200);
+        if ($this->isGranted('ROLE_ADMIN')) {
+
+            $media = $em->getRepository(Media::class)->findBy($criteria);
+        } elseif ($this->isGranted('ROLE_MODERATOR')) {
+
+            $media = $em->getRepository(Media::class)->findBy($criteria);
+        } else {
+            $criteria['user'] = $user;
+            $media = $em->getRepository(Media::class)->findBy($criteria);
+        }
+
+
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = 5;
+        $offset = ($page - 1) * $limit;
+
+        $media = array_slice($media, $offset, $limit);
+
+        return $this->json($media, 200, [], ['groups' => ['media_read']]);
     }
+
+    #[Route('/media/filter', name: 'filter_media', methods: ['GET'])]
+    public function filterMedia(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $criteria = [];
+        if ($type = $request->query->get('type')) {
+            $criteria['file_type'] = $type;
+        }
+        if ($size = $request->query->get('size')) {
+            $criteria['file_size'] = $size;
+        }
+        if ($date = $request->query->get('date')) {
+            $criteria['created_at'] = new \DateTime($date);
+        }
+
+        $media = $em->getRepository(Media::class)->findBy($criteria);
+
+        $catalog = array_map(fn($m) => [
+            'id' => $m->getId(),
+            'name' => $m->getFileName(),
+            'file' => $m->getFileType(),
+            'uploadedDate' => $m->getCreatedAt()->format('Y-m-d H:i:s'),
+            'size' => $m->getFileSize(),
+            'preview' => $this->generatePreview($m),
+            'downloadUrl' => $this->generateUrl('download_media', ['id' => $m->getId()]),
+        ], $media);
+
+        return $this->json($catalog);
+    }
+
+    private function generatePreview(Media $media): ?string
+    {
+        if ($media->getFileType() === FileType::IMAGE) {
+            return $media->getThumbnailPath();
+        }
+        return null;
+    }
+
+    #[Route('/media', name: 'list_media', methods: ['GET'])]
+    public function listMedia(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
+
+        $mediaQuery = $em->getRepository(Media::class)
+            ->createQueryBuilder('m')
+            ->setFirstResult($offset)
+            ->setMaxResults($limit);
+
+        $mediaList = $mediaQuery->getQuery()->getResult();
+        $total = count($mediaList);
+
+        return $this->json([
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+            'data' => $mediaList
+        ]);
+    }
+
+
+    #[Route('/media/{id}/download', name: 'download_media', methods: ['GET'])]
+    public function downloadMedia(Media $media): Response
+    {
+        $filePath = $this->getParameter('kernel.project_dir') . '/public/uploads' . $media->getStoragePath();
+        return $this->file($filePath, $media->getFilename());
+    }
+
+
 
     #[Route('/media/{id}', name: 'get_media')]
     public function getMediaById(EntityManagerInterface $em, Media $m): JsonResponse
@@ -69,7 +158,7 @@ class MediaController extends AbstractController
     public function uploadMedia(Request $request, EntityManagerInterface $em, SluggerInterface $slugger, MessageBusInterface $messageBus): JsonResponse
     {
         $file = $request->files->get('file');
-        $user = $em->getRepository(User::class)->find(1);
+        $user = $this->getUser();
 
 
         if (!$file instanceof UploadedFile) {
@@ -155,7 +244,7 @@ class MediaController extends AbstractController
         $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads';
 
         $media = new Media();
-        $media->setUserId($user);
+        $media->setUser($user);
         $media->setFilename($originalFilename);
         $media->setStoragePath('/' . $newFilename);
         $media->setFileSize($file->getSize());
@@ -271,4 +360,5 @@ class MediaController extends AbstractController
 
         return $this->json($media, 200);
     }
+
 }

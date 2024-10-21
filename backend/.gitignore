@@ -31,3 +31,4 @@ src/.DS_Store/
 /config/jwt/*.pem
 ###< lexik/jwt-authentication-bundle ###
 public/uploads/
+config/jwt/
