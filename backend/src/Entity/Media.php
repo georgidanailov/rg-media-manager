@@ -8,6 +8,8 @@ use App\Repository\MediaRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Attribute\Ignore;
 
 
 #[ORM\Entity(repositoryClass: MediaRepository::class)]
@@ -16,19 +18,26 @@ class Media
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['media_read'])]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'media')]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'media')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $user_id = null;
+    #[Groups(['media_read'])]
+    private ?User $user = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['media_read'])]
     private ?string $file_name = null;
 
+
+
     #[ORM\Column(length: 500)]
+    #[Groups(['media_read'])]
     private ?string $storage_path = null;
 
     #[ORM\Column]
+    #[Groups(['media_read'])]
     private ?int $file_size = null;
 
     #[ORM\Column(enumType: FileType::class)]
@@ -46,9 +55,17 @@ class Media
     #[ORM\OneToMany(targetEntity: Metadata::class, mappedBy: 'file_id')]
     private Collection $metadata_type;
 
+    /**
+     * @var Collection<int, Tag>
+     */
+    #[ORM\ManyToMany(targetEntity: Tag::class, mappedBy: 'media')]
+    #[Groups(['media_read'])]
+    private Collection $tags;
+
     public function __construct()
     {
         $this->metadata_type = new ArrayCollection();
+        $this->tags = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -56,14 +73,14 @@ class Media
         return $this->id;
     }
 
-    public function getUserId(): ?User
+    public function getUser(): ?User
     {
-        return $this->user_id;
+        return $this->user;
     }
 
-    public function setUserId(?User $user_id): static
+    public function setUser(?User $user): static
     {
-        $this->user_id = $user_id;
+        $this->user = $user;
 
         return $this;
     }
@@ -165,6 +182,33 @@ class Media
             if ($name->getFileId() === $this) {
                 $name->setFileId(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Tag>
+     */
+    public function getTags(): Collection
+    {
+        return $this->tags;
+    }
+
+    public function addTag(Tag $tag): static
+    {
+        if (!$this->tags->contains($tag)) {
+            $this->tags->add($tag);
+            $tag->addMedium($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTag(Tag $tag): static
+    {
+        if ($this->tags->removeElement($tag)) {
+            $tag->removeMedium($this);
         }
 
         return $this;
