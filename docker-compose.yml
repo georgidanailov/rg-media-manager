@@ -72,9 +72,9 @@ services:
       - app_network
 
   worker:
-    image: rg-media-manager-backend:latest
+    image: mediamanager-backend:latest
     container_name: symfony_worker
-    command: php bin/console messenger:consume async --time-limit=3600 --memory-limit=128M
+    command: php bin/console messenger:consume async
     depends_on:
       - backend
     volumes:
