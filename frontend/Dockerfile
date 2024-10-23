@@ -1,5 +1,5 @@
 # Step 1: Use Node.js as the base image
-FROM node:18-alpine AS build
+FROM node:18-alpine AS development
 
 # Set the working directory
 WORKDIR /app
@@ -13,17 +13,11 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
-# Build the React app for production
+# Build the application
 RUN npm run build
 
-# Step 2: Use Nginx to serve the build files
-FROM nginx:alpine
+# Expose port 3000 for the development server
+EXPOSE 3000
 
-# Copy the build files to the Nginx html folder
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Expose port 80 to allow external connections
-EXPOSE 80
-
-# Start Nginx when the container starts
-CMD ["nginx", "-g", "daemon off;"]
+# Start the development server
+CMD ["npm", "run", "start"]
