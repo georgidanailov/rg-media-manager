@@ -32,7 +32,7 @@ services:
     image: nginx:alpine
     container_name: symfony_nginx
     ports:
-      - "8000:80"
+      - "9000:80"
     volumes:
       - ./nginx:/etc/nginx/conf.d
       - ./backend:/var/www/symfony
