@@ -40,4 +40,14 @@ class MediaRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+
+    public function findFilesOlderThan (\DateTime $date){
+        return $this->createQueryBuilder('m')
+            ->where('m.deleted_at IS NOT NULL')
+            ->andWhere('m.deleted_at <= :date')
+            ->setParameter('date', $date)
+            ->getQuery()
+            ->getResult();
+    }
+
 }

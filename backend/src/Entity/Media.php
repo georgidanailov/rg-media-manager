@@ -62,6 +62,10 @@ class Media
     #[Groups(['media_read'])]
     private Collection $tags;
 
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $deleted_at = null;
+
+
     public function __construct()
     {
         $this->metadata_type = new ArrayCollection();
@@ -213,4 +217,17 @@ class Media
 
         return $this;
     }
+
+    public function getDeletedAt(): ?\DateTimeInterface
+    {
+        return $this->deleted_at;
+    }
+
+    public function setDeletedAt(?\DateTimeInterface $deleted_at): static
+    {
+        $this->deleted_at = $deleted_at;
+
+        return $this;
+    }
+
 }
