@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-.idea
-=======
 .idea/
->>>>>>> Stashed changes
+.env
+.DS_Store
