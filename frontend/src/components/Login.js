@@ -12,7 +12,7 @@ const Login = () => {
         e.preventDefault();
 
         try {
-            const response = await axios.post('/api/token', {
+            const response = await axios.post('http://localhost:9000/login', {
                 email,
                 password,
             });

@@ -14,10 +14,14 @@ const Register = () => {
         e.preventDefault();
 
         try {
-            const response = await axios.post('/api/register', {
+            const response = await axios.post('http://localhost:9000/register', {
                 name,
                 email,
                 password,
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                }
             });
 
             // If registration is successful, redirect to login or display a success message
