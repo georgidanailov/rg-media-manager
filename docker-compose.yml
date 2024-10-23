@@ -17,8 +17,9 @@ services:
   database:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: 11111111
-      MYSQL_DATABASE: RGMediaManager
+        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        MYSQL_DATABASE: ${MYSQL_DATABASE}
+        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - database_data:/var/lib/mysql
     networks:
@@ -47,7 +48,7 @@ services:
       dockerfile: Dockerfile
     container_name: react_frontend
     ports:
-      - "3000:80"
+      - "3000:3000"
     networks:
       - app_network
 
@@ -70,11 +71,14 @@ services:
       - "3310:3310"
     networks:
       - app_network
+    volumes:
+      - clamav_data:/var/lib/clamav/
+
 
   worker:
-    image: mediamanager-backend:latest
+    image: rg-media-manager-backend:latest
     container_name: symfony_worker
-    command: php bin/console messenger:consume async
+    command: php bin/console messenger:consume async --time-limit=3600
     depends_on:
       - backend
     volumes:

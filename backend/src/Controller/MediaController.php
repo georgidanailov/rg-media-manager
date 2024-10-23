@@ -9,6 +9,7 @@ use App\Enum\FileType;
 use App\Message\ScanFileMessage;
 use App\Message\ProcessMediaMessage;
 use App\Service\MediaProcessingService;
+use App\Service\MediaService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -19,16 +20,17 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use function Symfony\Component\Clock\now;
 
 
 class MediaController extends AbstractController
 {
-    private MediaProcessingService $mediaProcessingService;
+    private $mediaService;
 
     // Inject MediaProcessingService into the controller
-    public function __construct(MediaProcessingService $mediaProcessingService)
+    public function __construct(MediaService $mediaService)
     {
-        $this->mediaProcessingService = $mediaProcessingService;
+        $this->mediaService = $mediaService;
     }
 
     #[Route('/media', name: 'get_all_media', methods: ['GET'])]
@@ -141,17 +143,21 @@ class MediaController extends AbstractController
     }
 
     #[Route('/media/{id}/delete', name: 'delete_media')]
-    public function deleteMedia(EntityManagerInterface $em, Media $m): JsonResponse
+    public function deleteMedia(EntityManagerInterface $em, Media $media): JsonResponse
     {
-        $media = $em->getRepository(Media::class)->find($m->getId());
-
-        if (!$media) {
-            throw $this->createNotFoundException('File not found');
+        $file = $em->getRepository(Media::class)->find($media->getId());
+        if (!$file) {
+            return new JsonResponse(['message' => 'Media not found'], 404);
         }
 
-        $em->remove($m);
-        $em->flush();
-        return $this->json(null, 204);
+        if ($file->getUser() == $this->getUser() || $this->isGranted('ROLE_ADMIN') || $this->isGranted('ROLE_MODERATOR')) {
+            $file->setDeletedAt(new \DateTime('now'));
+            $em->flush();
+
+            return new JsonResponse(['message' => 'Media deleted'], 200);
+        }
+
+       return new JsonResponse(['message' => 'You are not allowed to delete this file'], 403);
     }
 
     #[Route('/medias/upload', name: 'upload_media', methods: ['POST'])]
