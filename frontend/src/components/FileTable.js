@@ -1,13 +1,46 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+// Utility function to format bytes to MB
+const formatBytesToMB = (bytes) => {
+    if (bytes === 0) return '0 MB';
+    const formattedSize = (bytes / (1024 * 1024)).toFixed(2); // Convert bytes to MB and format to 2 decimal places
+    return `${formattedSize} MB`;
+};
 
 const FileTable = () => {
-    const files = [
-        { id: 1, name: 'Robot_v2.mp4', uploadedDate: '06/03/23', size: '237 KB', type: 'Video' },
-        { id: 2, name: 'Business_woman_filming.mov', uploadedDate: '03/03/23', size: '134 KB', type: 'Video' },
-        { id: 3, name: 'New_promo_video.mov', uploadedDate: '01/03/23', size: '217 MB', type: 'Video' },
-        { id: 4, name: 'Emp_comms_March_2023.mp4', uploadedDate: '25/02/23', size: '345 MB', type: 'Video' },
-        { id: 5, name: 'test.mkv', uploadedDate: '22/02/23', size: '237 KB', type: 'Video' },
-    ];
+    const [files, setFiles] = useState([]); // Initialize files as an empty array
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchFiles = async () => {
+            try {
+                const response = await axios.get('http://localhost:9000/media/filter', {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    }
+                });
+
+                // Check if the response and data exist
+                if (Array.isArray(response.data)) {
+                    setFiles(response.data); // Directly set files to the array
+                } else {
+                    setError('No files found.');
+                }
+            } catch (err) {
+                setError('Failed to fetch files.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchFiles();
+    }, []);
+
+    if (loading) {
+        return <p>Loading files...</p>;
+    }
 
     return (
         <div className="table-responsive">
@@ -22,19 +55,34 @@ const FileTable = () => {
                 </tr>
                 </thead>
                 <tbody>
-                {files.map((file) => (
-                    <tr key={file.id}>
-                        <td>{file.name}</td>
-                        <td>{file.type}</td>
-                        <td>{file.uploadedDate}</td>
-                        <td>{file.size}</td>
-                        <td>
-                            <button className="btn btn-success btn-sm me-2">Edit</button>
-                            <button className="btn btn-success btn-sm me-2">Delete</button>
-                            <button className="btn btn-success btn-sm">Download</button>
+                {error && (
+                    <tr>
+                        <td colSpan="5" className="text-center text-danger">
+                            {error}
                         </td>
                     </tr>
-                ))}
+                )}
+                {files.length > 0 ? (
+                    files.map((file) => (
+                        <tr key={file.id}>
+                            <td>{file.name}</td>
+                            <td>{file.file}</td>
+                            <td>{new Date(file.uploadedDate).toLocaleString()}</td>
+                            <td>{formatBytesToMB(file.size)}</td>
+                            <td>
+                                <button className="btn btn-success btn-sm me-2">Edit</button>
+                                <button className="btn btn-danger btn-sm me-2">Delete</button>
+                                <a href={file.downloadUrl} className="btn btn-primary btn-sm">Download</a>
+                            </td>
+                        </tr>
+                    ))
+                ) : (
+                    <tr>
+                        <td colSpan="5" className="text-center">
+                            No files found.
+                        </td>
+                    </tr>
+                )}
                 </tbody>
             </table>
         </div>
