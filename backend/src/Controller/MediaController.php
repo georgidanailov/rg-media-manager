@@ -64,17 +64,59 @@ class MediaController extends AbstractController
     public function filterMedia(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $criteria = [];
+
+        // Filter by file type
         if ($type = $request->query->get('type')) {
             $criteria['file_type'] = $type;
         }
-        if ($size = $request->query->get('size')) {
-            $criteria['file_size'] = $size;
-        }
-        if ($date = $request->query->get('date')) {
-            $criteria['created_at'] = new \DateTime($date);
+
+        // Filter by file name (partial match)
+        if ($name = $request->query->get('name')) {
+            // Use LIKE with wildcard for partial name match
+            $mediaQuery = $em->getRepository(Media::class)
+                ->createQueryBuilder('m')
+                ->where('m.file_name LIKE :name')
+                ->setParameter('name', '%' . $name . '%'); // Partial match using wildcards
+        } else {
+            // Initialize query without name filter if not set
+            $mediaQuery = $em->getRepository(Media::class)
+                ->createQueryBuilder('m');
         }
 
-        $media = $em->getRepository(Media::class)->findBy($criteria);
+        // Filter by file size
+        if ($size = $request->query->get('size')) {
+            switch ($size) {
+                case 'small':
+                    $mediaQuery->andWhere('m.file_size < :size')
+                        ->setParameter('size', 10 * 1024 * 1024); // Less than 10 MB
+                    break;
+                case 'medium':
+                    $mediaQuery->andWhere('m.file_size BETWEEN :minSize AND :maxSize')
+                        ->setParameter('minSize', 10 * 1024 * 1024)
+                        ->setParameter('maxSize', 100 * 1024 * 1024); // Between 10 MB and 100 MB
+                    break;
+                case 'large':
+                    $mediaQuery->andWhere('m.file_size > :size')
+                        ->setParameter('size', 100 * 1024 * 1024); // Greater than 100 MB
+                    break;
+            }
+        }
+
+        // Handle pagination
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = 5;
+        $offset = ($page - 1) * $limit;
+
+        // Apply pagination
+        $mediaQuery->setFirstResult($offset)->setMaxResults($limit);
+        $mediaList = $mediaQuery->getQuery()->getResult();
+
+        // Total items for pagination
+        $totalItems = $em->getRepository(Media::class)
+            ->createQueryBuilder('m')
+            ->select('count(m.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
 
         $catalog = array_map(fn($m) => [
             'id' => $m->getId(),
@@ -84,9 +126,14 @@ class MediaController extends AbstractController
             'size' => $m->getFileSize(),
             'preview' => $this->generatePreview($m),
             'downloadUrl' => $this->generateUrl('download_media', ['id' => $m->getId()]),
-        ], $media);
+        ], $mediaList);
 
-        return $this->json($catalog);
+        return $this->json([
+            'data' => $catalog,
+            'totalItems' => $totalItems,
+            'currentPage' => $page,
+            'itemsPerPage' => $limit,
+        ]);
     }
 
     private function generatePreview(Media $media): ?string
