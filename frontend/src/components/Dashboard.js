@@ -1,7 +1,6 @@
 import React from 'react';
 import FileTable from './FileTable';
 import SearchFilter from './SearchFilter';
-import Pagination from './Pagination';
 import FileUpload from "./FileUpload";
 
 const Dashboard = () => {
