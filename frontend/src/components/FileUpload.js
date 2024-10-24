@@ -5,7 +5,7 @@ const FileUpload = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadStatus, setUploadStatus] = useState('');
-    const [mediaMetadata, setMediaMetadata] = useState(null); // State for media metadata
+    const [mediaMetadata, setMediaMetadata] = useState(null);
 
     const handleFileChange = (event) => {
         setSelectedFile(event.target.files[0]);
@@ -42,11 +42,20 @@ const FileUpload = () => {
             if (response.status === 200) {
                 setUploadStatus('File uploaded successfully!');
 
+                setUploadProgress(0);
+
             } else {
                 setUploadStatus('Failed to upload the file.');
+
+                setUploadProgress(0);
             }
         } catch (error) {
-            setUploadStatus('Error uploading the file. Please try again.');
+            if (error.response ) {
+                setUploadStatus(`Error uploading the file: ${error.response.data.error}`);
+            } else {
+                setUploadStatus('Error uploading the file. Please try again.');
+            }
+            setUploadProgress(0);
         }
     };
 
