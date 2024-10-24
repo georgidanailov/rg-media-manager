@@ -347,24 +347,35 @@ class MediaController extends AbstractController
 
 
     #[Route('/media/{id}/upload', name: 'edit_media')]
-    public function editMedia(Request $request, EntityManagerInterface $em, Media $m): JsonResponse
+    public function uploadNewMediaVersion(Request $request, EntityManagerInterface $em, Media $media): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
+        $originalFile = $em->getRepository(Media::class)->find($media->getId());
+        $user = $this->getUser();
 
-        if (trim($data['name']) == "") {
-            throw $this->createNotFoundException('Wrong name format');
+        if (!$originalFile){
+            return new JsonResponse(['error' => 'Media not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $media = $em->getRepository(Media::class)->find($m->getId());
-        if (!$media) {
-            throw $this->createNotFoundException('File not found');
+        if($originalFile->getUser()->getId() !== $user->getId()){
+            return new JsonResponse(["error" => "You are not the owner of this file"], Response::HTTP_FORBIDDEN);
         }
 
-        $media->setFileName($data['name']);
-        $media->setCreatedAt(new \DateTime('now'));
-        $em->flush();
+        $newFile = $request->files->get('file');
 
-        return $this->json($media, 200);
+        if ($originalFile->getFileType() !== $newFile->getFileType()) {
+            return new JsonResponse(['error' => 'File types do not match'], Response::HTTP_FORBIDDEN);
+        }
+
+        $newVersionFile = new Media();
+
+
+
+
+
+
+
+
+        return new JsonResponse(["message" => "File Version for" .$originalFile->getFileName() .  "uploaded successfully"], Response::HTTP_OK);
     }
 
 }
