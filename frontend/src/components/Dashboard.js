@@ -1,9 +1,79 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import FileTable from './FileTable';
 import SearchFilter from './SearchFilter';
 import FileUpload from "./FileUpload";
+import axios from 'axios';
 
 const Dashboard = () => {
+    const [files, setFiles] = useState([]);
+    const [refreshFiles, setRefreshFiles] = useState(false); // State to trigger a refresh after upload
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+
+    const fetchAllFiles = async () => {
+        try {
+            const response = await axios.get('http://localhost:9000/media/filter', {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+                params: {
+                    page, // Send the current page number to the backend
+                }
+            });
+
+            if (response.data && response.data.data) {
+                setFiles(response.data.data);
+                setTotalPages(Math.ceil(response.data.totalItems / response.data.itemsPerPage));
+            } else {
+                setFiles([]);
+            }
+        } catch (error) {
+            console.error('Error fetching files:', error);
+        }
+    };
+
+    // Function to handle the search
+    const handleSearch = async (filters) => {
+        try {
+            const { name, type, size } = filters;
+            const response = await axios.get('http://localhost:9000/media/filter', {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+                params: {
+                    name: name || undefined,
+                    type: type || undefined,
+                    size: size || undefined,
+                    page, // Send the current page number with the search
+                }
+            });
+
+            if (response.data && response.data.data) {
+                setFiles(response.data.data);
+                setTotalPages(Math.ceil(response.data.totalItems / response.data.itemsPerPage));
+            } else {
+                setFiles([]);
+            }
+        } catch (error) {
+            console.error('Error fetching filtered files:', error);
+        }
+    };
+
+    // Function to handle successful file upload and refresh the file list
+    const handleUploadSuccess = () => {
+        setRefreshFiles(!refreshFiles); // Trigger a refresh by toggling state
+    };
+
+    // Function to handle page change
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
+    };
+
+    // UseEffect to fetch all files on initial page load and when refreshFiles changes
+    useEffect(() => {
+        fetchAllFiles();
+    }, [refreshFiles, page]);
+
     return (
         <div className="container-fluid">
             <div className="row">
@@ -36,9 +106,26 @@ const Dashboard = () => {
                         <h2>Your Uploaded Files</h2>
                         <button className="btn btn-success btn-lg">Upload</button>
                     </div>
-                    <SearchFilter />
-                    <FileTable />
-                    <FileUpload />
+                    <SearchFilter onSearch={handleSearch} />
+                    <FileTable files={files} /> {/* Pass the files to FileTable */}
+                    <div className="pagination">
+                        <button
+                            disabled={page === 1}
+                            onClick={() => handlePageChange(page - 1)}
+                            className="btn btn-primary me-2"
+                        >
+                            Previous
+                        </button>
+                        <span>Page {page} of {totalPages}</span>
+                        <button
+                            disabled={page === totalPages}
+                            onClick={() => handlePageChange(page + 1)}
+                            className="btn btn-primary ms-2"
+                        >
+                            Next
+                        </button>
+                    </div>
+                    <FileUpload onUploadSuccess={handleUploadSuccess} /> {/* Pass handleUploadSuccess to refresh after upload */}
                 </div>
             </div>
         </div>

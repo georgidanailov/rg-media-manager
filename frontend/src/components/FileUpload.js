@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const FileUpload = () => {
+const FileUpload = ({ onUploadSuccess }) => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadStatus, setUploadStatus] = useState('');
-    const [mediaMetadata, setMediaMetadata] = useState(null);
 
     const handleFileChange = (event) => {
         setSelectedFile(event.target.files[0]);
         setUploadProgress(0);
         setUploadStatus('');
-        setMediaMetadata(null);
     };
 
     const handleUpload = async (event) => {
@@ -29,7 +27,7 @@ const FileUpload = () => {
             const response = await axios.post('http://localhost:9000/medias/upload', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}` // Use the token from local storage
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 },
                 onUploadProgress: (progressEvent) => {
                     const percentCompleted = Math.round(
@@ -41,25 +39,19 @@ const FileUpload = () => {
 
             if (response.status === 200) {
                 setUploadStatus('File uploaded successfully!');
-
                 setUploadProgress(0);
 
+                // Trigger a refresh of the file list
+                onUploadSuccess();
             } else {
                 setUploadStatus('Failed to upload the file.');
-
                 setUploadProgress(0);
             }
         } catch (error) {
-            if (error.response ) {
-                setUploadStatus(`Error uploading the file: ${error.response.data.error}`);
-            } else {
-                setUploadStatus('Error uploading the file. Please try again.');
-            }
+            setUploadStatus('Error uploading the file. Please try again.');
             setUploadProgress(0);
         }
     };
-
-
 
     return (
         <div>
