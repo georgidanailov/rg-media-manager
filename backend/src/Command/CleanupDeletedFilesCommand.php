@@ -6,10 +6,13 @@ namespace App\Command;
 
 use App\Entity\Media;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+
+#[AsCommand(name:"app:cleanup-deleted-files")]
 class CleanupDeletedFilesCommand extends Command
 {
     protected static $defaultName = 'app:cleanup-deleted-files';

@@ -49,6 +49,11 @@ services:
     container_name: react_frontend
     ports:
       - "3000:3000"
+    volumes:
+     - ./frontend/src:/app/src   # Mounts your local 'src' folder to the Docker container's 'src' folder
+     - ./frontend/public:/app/public   # Mounts public folder for hot reload as well
+    environment:
+     - CHOKIDAR_USEPOLLING=true  # Ensures hot-reload works inside Docker
     networks:
       - app_network
 
