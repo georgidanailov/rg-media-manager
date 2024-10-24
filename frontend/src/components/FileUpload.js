@@ -75,15 +75,6 @@ const FileUpload = () => {
                 </div>
             )}
             {uploadStatus && <p>{uploadStatus}</p>}
-            {mediaMetadata && (
-                <div>
-                    <h3>Media Metadata</h3>
-                    <p>Filename: {mediaMetadata.filename}</p>
-                    <p>File Size: {mediaMetadata.fileSize} bytes</p>
-                    <p>File Type: {mediaMetadata.fileType}</p>
-                    <p>Uploaded At: {new Date(mediaMetadata.createdAt).toLocaleString()}</p>
-                </div>
-            )}
         </div>
     );
 };

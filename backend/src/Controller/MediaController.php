@@ -36,7 +36,7 @@ class MediaController extends AbstractController
     #[Route('/media', name: 'get_all_media', methods: ['GET'])]
     public function getMedia(Request $request, EntityManagerInterface $em): JsonResponse
     {
-        $user = $em->getRepository(User::class)->find(1);
+        $user = $this->getUser();
         $criteria = [];
 
         if ($this->isGranted('ROLE_ADMIN')) {
