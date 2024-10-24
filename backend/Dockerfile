@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     ffmpeg \
+    cron \
     libfreetype6-dev \
     libzip-dev \
     zip \
@@ -24,6 +25,15 @@ RUN sed -E -i -e 's/max_execution_time = 30/max_execution_time = 60/' $PHP_INI_D
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+#Add cron file
+COPY cron/media-cleanup-cron.txt /etc/cron.d/media-cleanup-cron
+
+#Set permissions for cron file
+RUN chmod 0644 /etc/cron.d/
+
+#Apply cron job
+RUN crontab /etc/cron.d/media-cleanup-cron
 
 # Set working directory
 WORKDIR /var/www/symfony
@@ -45,4 +55,4 @@ RUN chown -R www-data:www-data /var/www/symfony
 EXPOSE 9000
 
 # Start PHP-FPM
-CMD ["php-fpm"]
+CMD ["sh", "-c", "service cron start && php-fpm"]
