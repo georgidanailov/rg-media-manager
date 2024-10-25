@@ -50,13 +50,6 @@ class MediaController extends AbstractController
             $media = $em->getRepository(Media::class)->findBy($criteria);
         }
 
-
-        $page = max(1, (int) $request->query->get('page', 1));
-        $limit = 5;
-        $offset = ($page - 1) * $limit;
-
-        $media = array_slice($media, $offset, $limit);
-
         return $this->json($media, 200, [], ['groups' => ['media_read']]);
     }
 
@@ -65,23 +58,25 @@ class MediaController extends AbstractController
     {
         $criteria = [];
 
-        // Filter by file type
+        $mediaQuery = $em->getRepository(Media::class)
+            ->createQueryBuilder('m');
+
+// Filter by file type if provided
         if ($type = $request->query->get('type')) {
-            $criteria['file_type'] = $type;
+            $mediaQuery->andWhere('m.file_type = :type')
+                ->setParameter('type', $type);
         }
 
-        // Filter by file name (partial match)
+// Filter by file name (partial match) if provided
         if ($name = $request->query->get('name')) {
-            // Use LIKE with wildcard for partial name match
-            $mediaQuery = $em->getRepository(Media::class)
-                ->createQueryBuilder('m')
-                ->where('m.file_name LIKE :name')
+            $mediaQuery->andWhere('m.file_name LIKE :name')
                 ->setParameter('name', '%' . $name . '%'); // Partial match using wildcards
-        } else {
-            // Initialize query without name filter if not set
-            $mediaQuery = $em->getRepository(Media::class)
-                ->createQueryBuilder('m');
         }
+
+// Add more filters or criteria as needed
+
+
+        $results = $mediaQuery->getQuery()->getResult();
 
         // Filter by file size
         if ($size = $request->query->get('size')) {
@@ -180,13 +175,24 @@ class MediaController extends AbstractController
     #[Route('/media/{id}', name: 'get_media')]
     public function getMediaById(EntityManagerInterface $em, Media $m): JsonResponse
     {
-        $media = $em->getRepository(Media::class)->find($m->getId());
+        $user = $this->getUser();
+        $criteria = [];
 
-        if (!$media) {
-            throw $this->createNotFoundException('File not found');
+        if ($this->isGranted('ROLE_ADMIN')) {
+            $media = $em->getRepository(Media::class)->findOneBy(['id' => $m->getId()]);
+        } elseif ($this->isGranted('ROLE_MODERATOR')) {
+
+            $media = $em->getRepository(Media::class)->findOneBy(['id' => $m->getId()]);
+        } else {
+            if ($user->getId() === $m->getUser()->getId()) {
+                $media = $em->getRepository(Media::class)->findOneBy(['id' => $m->getId()]);
+
+            }else{
+                return new JsonResponse(['error' => 'You are not authorized to access this page.'], 403);
+            }
         }
 
-        return $this->json($media, 200);
+        return $this->json($media, 200, [], ['groups' => ['media_read']]);
     }
 
     #[Route('/media/{id}/delete', name: 'delete_media')]

@@ -104,7 +104,6 @@ const Dashboard = () => {
                 <div className="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                     <div className="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
                         <h2>Your Uploaded Files</h2>
-                        <button className="btn btn-success btn-lg">Upload</button>
                     </div>
                     <SearchFilter onSearch={handleSearch} />
                     <FileTable files={files} /> {/* Pass the files to FileTable */}
