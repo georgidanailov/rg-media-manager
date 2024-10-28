@@ -49,6 +49,8 @@ class Media
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $thumbnail_path = null;
 
+
+
     /**
      * @var Collection<int, Metadata>
      */
@@ -64,6 +66,18 @@ class Media
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $deleted_at = null;
+
+    #[ORM\ManyToOne(targetEntity: self::class)]
+    #[ORM\JoinColumn(name: "parent_id", referencedColumnName: "id", onDelete: "SET NULL", nullable: true)]
+    #[Groups(['media_read'])]
+    private ?self $parent = null;
+
+    #[ORM\Column(type: "boolean", options: ["default" => true])]
+    #[Groups(['media_read'])]
+    private ?bool $is_current_version = null;
+
+    #[ORM\Column]
+    private ?int $version = 1;
 
 
     public function __construct()
@@ -226,6 +240,44 @@ class Media
     public function setDeletedAt(?\DateTimeInterface $deleted_at): static
     {
         $this->deleted_at = $deleted_at;
+
+        return $this;
+    }
+
+    public function getParent(): ?self
+    {
+        return $this->parent;
+    }
+
+
+
+    public function setParent(?self $parent): static
+    {
+        $this->parent = $parent;
+
+        return $this;
+    }
+
+    public function isCurrentVersion(): ?bool
+    {
+        return $this->is_current_version;
+    }
+
+    public function setCurrentVersion(bool $is_current_version): static
+    {
+        $this->is_current_version = $is_current_version;
+
+        return $this;
+    }
+
+    public function getVersion(): ?int
+    {
+        return $this->version;
+    }
+
+    public function setVersion(int $version): static
+    {
+        $this->version = $version;
 
         return $this;
     }
