@@ -31,12 +31,11 @@ class ScanFileMessageHandler
         }
 
         $scanResult = shell_exec('clamscan ' . escapeshellarg($filePath));
-
-        if (!strpos($scanResult, 'Infected files: 0')) {
+        if (preg_match('/Infected files:\s+0/', $scanResult) === 0) {
             $user->setInfectedFileCount($user->getInfectedFileCount() + 1);
-
+            unlink($filePath);
             if ($user->getInfectedFileCount() >= 3) {
-                $user->setIsLocked(true);
+                $user->setLocked(true);
             }
 
             $this->em->flush();
