@@ -177,22 +177,31 @@ class MediaController extends AbstractController
             return new JsonResponse(['message'=>'Access Denied'], Response::HTTP_FORBIDDEN);
         }
 
-        $filePath = $this->getParameter('kernel.project_dir') . '/public/uploads' . $media->getStoragePath();
-        $response = new BinaryFileResponse($filePath);
-        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $media->getFileName());
-        return $response;
+            $fileName = explode(".", $media->getStoragePath());
+            $extension = "." . $fileName[1];
+
+            $filePath = $this->getParameter('kernel.project_dir') . '/public/uploads' . $media->getStoragePath();
+            $response = new BinaryFileResponse($filePath);
+            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $media->getFileName() . $extension);
+            return $response;
+            
     }
 
-    #[Route('/media/download-multiple', name: 'download_multiple', methods: ['GET'])]
+    #[Route('/media/download-multiple', name: 'download_multiple', methods: ['POST'])]
     public function downloadMultipleMedia(Request $request, EntityManagerInterface $em): Response
     {
-        $fileIds = $request->get('files');
-        $files = $em->getRepository(Media::class)->findBy(['id' => $fileIds]);
+        $fileIds = $request->getPayload()->all('files');
+        $files = [];
+        foreach ($fileIds as $fileId) {
+            $file = $em->getRepository(Media::class)->find($fileId);
+            $files[] = $file;
+        }
         return $this->downloadMultipleFiles($files);
     }
 
     public function downloadMultipleFiles(array $files): Response
     {
+
         $zip = new \ZipArchive();
         $zipFileName = 'files_' . date('YmdHis') . '.zip';
         $zipFilePath = $this->getParameter('kernel.project_dir') . '/public/uploads/' . $zipFileName;
@@ -200,7 +209,9 @@ class MediaController extends AbstractController
         if($zip->open($zipFilePath, \ZipArchive::CREATE) !== TRUE) {
             return new JsonResponse(['error'=>'Unable to create ZIP file'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
+        if(file_exists($zipFilePath)) {
+            return new JsonResponse(['error'=>'ZIP file does not exist'], Response::HTTP_NOT_FOUND);
+        }
         foreach ($files as $file) {
             $filePath = $this->getParameter('kernel.project_dir') . '/public/uploads' . $file->getStoragePath();
             if (file_exists($filePath)) {
