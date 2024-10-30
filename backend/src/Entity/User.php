@@ -58,6 +58,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany( targetEntity: Media::class , mappedBy: 'user')]
     private Collection $media;
 
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $lastLoginIp = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $lastLoginUserAgent = null;
+
+
 
     public function getId(): ?int
     {
@@ -169,7 +176,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function addMedia(Media $media): static {
         if (!$this->media->contains($media)) {
             $this->media->add($media);
-            $media->setUser($this); // Set user reference in Media
+            $media->setUser($this);
         }
 
         return $this;
@@ -178,7 +185,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removeMedia(Media $media): static {
         if ($this->media->removeElement($media)) {
             if ($media->getUser() === $this) {
-                $media->setUser(null); // Set user reference in Media to null
+                $media->setUser(null);
             }
         }
 
@@ -221,4 +228,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+
+    public function getLastLoginIp(): ?string
+    {
+        return $this->lastLoginIp;
+    }
+
+    public function setLastLoginIp(?string $ip): self
+    {
+        $this->lastLoginIp = $ip;
+        return $this;
+    }
+
+    public function getLastLoginUserAgent(): ?string
+    {
+        return $this->lastLoginUserAgent;
+    }
+
+    public function setLastLoginUserAgent(?string $userAgent): self
+    {
+        $this->lastLoginUserAgent = $userAgent;
+        return $this;
+    }
+
 }

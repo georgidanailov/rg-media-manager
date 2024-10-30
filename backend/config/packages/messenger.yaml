@@ -27,6 +27,10 @@ framework:
 
             App\Message\ProcessMediaMessage: async
             App\Message\ScanFileMessage: async
+            App\Message\FileUploadMessage: async
+            App\Message\FileDeletedMessage: async
+          #  App\Message\LoginNotificationMessage: async
+
 
             # Route your messages to the transports
             # 'App\Message\YourMessage': async

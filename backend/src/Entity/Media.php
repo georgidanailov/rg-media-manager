@@ -68,7 +68,7 @@ class Media
     private ?\DateTimeInterface $deleted_at = null;
 
     #[ORM\ManyToOne(targetEntity: self::class)]
-    #[ORM\JoinColumn(name: "parent_id", referencedColumnName: "id", onDelete: "SET NULL", nullable: true)]
+    #[ORM\JoinColumn(name: "parent_id", referencedColumnName: "id", nullable: true, onDelete: "SET NULL")]
     #[Groups(['media_read'])]
     private ?self $parent = null;
 
@@ -281,6 +281,4 @@ class Media
 
         return $this;
     }
-
-
 }

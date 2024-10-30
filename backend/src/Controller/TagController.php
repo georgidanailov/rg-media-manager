@@ -85,11 +85,13 @@ class TagController extends AbstractController
         $tags = $data['tags'] ?? [];
 
         foreach ($tags as $tagName) {
+            $normalizedTagName = strtolower($tagName);
 
-            $tag = $this->tagRepository->findOneBy(['name' => $tagName]);
+            $tag = $this->tagRepository->findOneBy(['name' => $normalizedTagName]);
+
             if (!$tag) {
                 $tag = new Tag();
-                $tag->setName($tagName);
+                $tag->setName($normalizedTagName);
                 $this->entityManager->persist($tag);
             }
 
@@ -102,6 +104,7 @@ class TagController extends AbstractController
 
         return new JsonResponse(['success' => 'Tags added to media successfully'], JsonResponse::HTTP_OK);
     }
+
 
     #[Route('/media/{mediaId}/tags/{tagId}', name: 'remove_from_media', methods: ['DELETE'])]
     public function removeTagFromMedia(int $mediaId, int $tagId): JsonResponse
