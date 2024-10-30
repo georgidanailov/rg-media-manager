@@ -6,6 +6,8 @@ use App\Entity\Media;
 use App\Entity\Metadata;
 use App\Entity\User;
 use App\Enum\FileType;
+use App\Message\FileDeletedMessage;
+use App\Message\FileUploadMessage;
 use App\Message\ScanFileMessage;
 use App\Message\ProcessMediaMessage;
 use App\Service\MediaProcessingService;
@@ -241,7 +243,7 @@ class MediaController extends AbstractController
     }
 
     #[Route('/media/{id}/delete', name: 'delete_media')]
-    public function deleteMedia(EntityManagerInterface $em, Media $media): JsonResponse
+    public function deleteMedia(EntityManagerInterface $em, Media $media,MessageBusInterface $messageBus): JsonResponse
     {
         $file = $em->getRepository(Media::class)->find($media->getId());
         if (!$file) {
@@ -251,6 +253,11 @@ class MediaController extends AbstractController
         if ($file->getUser() == $this->getUser() || $this->isGranted('ROLE_ADMIN') || $this->isGranted('ROLE_MODERATOR')) {
             $file->setDeletedAt(new \DateTime('now'));
             $em->flush();
+
+            if($this->isGranted('ROLE_ADMIN') || $this->isGranted('ROLE_MODERATOR') ){
+
+                $messageBus->dispatch(new FileDeletedMessage($media->getUser()->getId(), $file->getFileName()));
+            }
 
             return new JsonResponse(['message' => 'Media deleted'], 200);
         }
@@ -369,6 +376,8 @@ class MediaController extends AbstractController
 
         $em->persist($media);
         $em->flush();
+
+        $messageBus->dispatch(new FileUploadMessage($media));
 
         // Call media processing service after file upload
         $messageBus->dispatch(new ProcessMediaMessage($media, $uploadDir));

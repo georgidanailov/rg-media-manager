@@ -22,5 +22,6 @@ class ProcessMediaMessageHandler
         $uploadDir = $message->getUploadDir();
 
         $this->mediaProcessingService->handleMediaProcessing($media, $uploadDir);
+
     }
 }
