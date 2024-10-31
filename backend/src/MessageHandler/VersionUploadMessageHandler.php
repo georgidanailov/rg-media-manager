@@ -39,7 +39,7 @@ class VersionUploadMessageHandler
 
 
         $notification = (new Notification())
-            ->setType(NotificationType::FILE_UPLOAD)
+            ->setType(NotificationType::FILE_MODIFICATION)
             ->setMessage('New version uploaded for: ' . $message->getMedia()->getFileName())
             ->setReceiver($user->getEmail())
             ->setCreatedAt(new \DateTime());
