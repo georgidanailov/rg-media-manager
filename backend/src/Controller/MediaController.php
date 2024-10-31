@@ -10,6 +10,7 @@ use App\Message\FileDeletedMessage;
 use App\Message\FileUploadMessage;
 use App\Message\ScanFileMessage;
 use App\Message\ProcessMediaMessage;
+use App\Message\VersionUploadMessage;
 use App\Service\MediaProcessingService;
 use App\Service\MediaService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -584,6 +585,8 @@ class MediaController extends AbstractController
         $em->persist($newVersionFile);
         $em->persist($originalFile);
         $em->flush();
+
+        $messageBus->dispatch(new VersionUploadMessage($originalFile));
 
         $messageBus->dispatch(new ProcessMediaMessage($newVersionFile, $uploadDir ));
 
