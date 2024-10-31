@@ -138,7 +138,7 @@ class MediaController extends AbstractController
 
     private function generatePreview(Media $media): ?string
     {
-        if ($media->getFileType() === FileType::IMAGE) {
+        if ($media->getFileType() === FileType::IMAGE || $media->getFileType() === FileType::VIDEO) {
             return $media->getThumbnailPath();
         }
         return null;
@@ -376,7 +376,7 @@ class MediaController extends AbstractController
         $media->setVersion(1);
         $media->setCurrentVersion(true);
         if ($fileType === FileType::IMAGE || $fileType === FileType::VIDEO) {
-            $media->setThumbnailPath($uploadDir . '/uploads/thumbnails/' . $newFilename);
+            $media->setThumbnailPath('/uploads/thumbnails/' . $newFilename);
         }
 
 

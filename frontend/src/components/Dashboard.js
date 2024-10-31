@@ -32,7 +32,6 @@ const Dashboard = () => {
         }
     };
 
-    // Function to handle the search
     const handleSearch = async (filters) => {
         try {
             const { name, type, size } = filters;
@@ -106,7 +105,7 @@ const Dashboard = () => {
                         <h2>Your Uploaded Files</h2>
                     </div>
                     <SearchFilter onSearch={handleSearch} />
-                    <FileTable files={files} /> {/* Pass the files to FileTable */}
+                    <FileTable files={files} />
                     <div className="pagination">
                         <button
                             disabled={page === 1}
@@ -124,7 +123,7 @@ const Dashboard = () => {
                             Next
                         </button>
                     </div>
-                    <FileUpload onUploadSuccess={handleUploadSuccess} /> {/* Pass handleUploadSuccess to refresh after upload */}
+                    <FileUpload onUploadSuccess={handleUploadSuccess} />
                 </div>
             </div>
         </div>

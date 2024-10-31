@@ -7,51 +7,41 @@ use App\Enum\FileType;
 
 class MediaProcessingService
 {
-
-
     public function handleMediaProcessing(Media $media, string $uploadDir): void
     {
         $filePath = $uploadDir . $media->getStoragePath();
 
         if ($media->getFileType() === FileType::IMAGE) {
-            $this->createImageThumbnails($filePath, $uploadDir . '/thumbnails/');
+            $this->createImageThumbnail($filePath, $uploadDir . '/thumbnails/');
         } elseif ($media->getFileType() === FileType::VIDEO) {
             $this->createVideoThumbnail($filePath, $uploadDir . '/thumbnails/');
             $this->createVideoPreview($filePath, $uploadDir . '/previews/');
         }
     }
 
-    private function createImageThumbnails(string $imagePath, string $thumbnailDir): void
+    private function createImageThumbnail(string $imagePath, string $thumbnailDir): void
     {
         $imageType = exif_imagetype($imagePath);
-        $imageResource = null;
+        $imageResource = match ($imageType) {
+            IMAGETYPE_JPEG => imagecreatefromjpeg($imagePath),
+            IMAGETYPE_PNG => imagecreatefrompng($imagePath),
+            IMAGETYPE_GIF => imagecreatefromgif($imagePath),
+            default => throw new \Exception('Unsupported image type')
+        };
 
-        switch ($imageType) {
-            case IMAGETYPE_JPEG:
-                $imageResource = imagecreatefromjpeg($imagePath);
-                break;
-            case IMAGETYPE_PNG:
-                $imageResource = imagecreatefrompng($imagePath);
-                break;
-            case IMAGETYPE_GIF:
-                $imageResource = imagecreatefromgif($imagePath);
-                break;
-            default:
-                throw new \Exception('Unsupported image type');
+        // Resize the image to 300x300
+        $thumbnail = imagescale($imageResource, 300, 300);
+
+        // Save the thumbnail with the original filename in the thumbnails directory
+        $thumbnailPath = $thumbnailDir . basename($imagePath);
+
+        // Ensure the thumbnail directory exists
+        if (!is_dir($thumbnailDir)) {
+            mkdir($thumbnailDir, 0777, true);
         }
 
-        $sizes = [
-            ['width' => 200, 'height' => 200],
-            ['width' => 400, 'height' => 400]
-        ];
-
-        foreach ($sizes as $size) {
-            $thumbResized = imagescale($imageResource, $size['width'], $size['height']);
-            $thumbPath = $thumbnailDir . pathinfo($imagePath, PATHINFO_FILENAME) . "_{$size['width']}x{$size['height']}.jpg";
-            imagejpeg($thumbResized, $thumbPath);
-            imagedestroy($thumbResized);
-        }
-
+        imagejpeg($thumbnail, $thumbnailPath);
+        imagedestroy($thumbnail);
         imagedestroy($imageResource);
     }
 
