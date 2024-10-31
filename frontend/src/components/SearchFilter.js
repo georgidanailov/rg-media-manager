@@ -6,7 +6,7 @@ const SearchFilter = ({ onSearch }) => {
     const [fileType, setFileType] = useState('');
     const [fileSize, setFileSize] = useState('');
 
-    // Debounced search function
+    // Debounced search function for partial name search
     const debouncedSearch = useCallback(
         debounce((filters) => {
             onSearch(filters);
@@ -16,20 +16,14 @@ const SearchFilter = ({ onSearch }) => {
 
     // Effect to trigger the debounced search when searchTerm changes
     useEffect(() => {
-        // Only trigger search if searchTerm is at least 3 characters
-        if (searchTerm.length >= 3 || searchTerm.length === 0) {
-            debouncedSearch({
-                name: searchTerm,
-                type: fileType,
-                size: fileSize,
-            });
+        if (searchTerm.length >= 2 || searchTerm.length === 0) {
+            debouncedSearch({ name: searchTerm });
         }
 
-        // Cleanup function to cancel debounce if component is unmounted or searchTerm changes
         return () => {
             debouncedSearch.cancel();
         };
-    }, [searchTerm, fileType, fileSize, debouncedSearch]);
+    }, [searchTerm, debouncedSearch]);
 
     const handleFileTypeChange = (e) => {
         setFileType(e.target.value);
@@ -37,6 +31,15 @@ const SearchFilter = ({ onSearch }) => {
 
     const handleFileSizeChange = (e) => {
         setFileSize(e.target.value);
+    };
+
+    const handleSearchClick = () => {
+        // Manual search including all filters
+        onSearch({
+            name: searchTerm,
+            type: fileType,
+            size: fileSize,
+        });
     };
 
     return (
@@ -47,14 +50,14 @@ const SearchFilter = ({ onSearch }) => {
                     className="form-control"
                     placeholder="Search by file name..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)} // Update search term as the user types
+                    onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
             <div className="col-md-3">
                 <select
                     className="form-select"
                     value={fileType}
-                    onChange={handleFileTypeChange} // Update file type
+                    onChange={handleFileTypeChange}
                 >
                     <option value="">Filter by Type</option>
                     <option value="video">Video</option>
@@ -67,7 +70,7 @@ const SearchFilter = ({ onSearch }) => {
                 <select
                     className="form-select"
                     value={fileSize}
-                    onChange={handleFileSizeChange} // Update file size
+                    onChange={handleFileSizeChange}
                 >
                     <option value="">Filter by Size</option>
                     <option value="small">0 - 10 MB</option>
@@ -76,7 +79,7 @@ const SearchFilter = ({ onSearch }) => {
                 </select>
             </div>
             <div className="col-md-2">
-                <button className="btn btn-success w-100" onClick={() => onSearch({ name: searchTerm, type: fileType, size: fileSize })}>
+                <button className="btn btn-success w-100" onClick={handleSearchClick}>
                     Search
                 </button>
             </div>
