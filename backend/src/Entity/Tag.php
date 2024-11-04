@@ -51,6 +51,7 @@ class Tag
     /**
      * @return Collection<int, Media>
      */
+    #[Groups(['tag_read'])]
     public function getMedia(): Collection
     {
         return $this->media;

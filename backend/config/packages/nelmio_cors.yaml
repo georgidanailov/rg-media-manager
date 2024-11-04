@@ -2,9 +2,11 @@ nelmio_cors:
     defaults:
         allow_credentials: true
         allow_origin: ['http://localhost:3000']
-        allow_headers: ['Content-Type', 'Authorization']
+        allow_headers: ['Content-Type', 'Authorization', 'fileNameWithExtension']
+        expose_headers: ['fileNameWithExtension', 'Content-Disposition']
         allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'DELETE']
         max_age: 3600
     paths:
         '^/api/': ~
         '^/login': ~
+
