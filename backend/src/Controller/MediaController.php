@@ -375,8 +375,10 @@ class MediaController extends AbstractController
         $media->setCreatedAt(new \DateTime('now'));
         $media->setVersion(1);
         $media->setCurrentVersion(true);
-        if ($fileType === FileType::IMAGE || $fileType === FileType::VIDEO) {
 
+        if ($fileType === FileType::IMAGE ) {
+            $media->setThumbnailPath('/uploads/thumbnails/' . $newFilename);
+        }elseif ($fileType === FileType::VIDEO){
             $thumbnailFilename = pathinfo($newFilename, PATHINFO_FILENAME) . '.jpg';
             $media->setThumbnailPath('/uploads/thumbnails/' . $thumbnailFilename);
         }
