@@ -64,8 +64,10 @@ class MediaController extends AbstractController
         $criteria = [];
 
         $mediaQuery = $em->getRepository(Media::class)
-            ->createQueryBuilder('m');
-
+            ->createQueryBuilder('m')
+            ->where('m.is_current_version = :is_current_version')
+            ->andWhere('m.deleted_at IS NULL')
+            ->setParameter('is_current_version', true);
 // Filter by file type if provided
         if ($type = $request->query->get('type')) {
             $mediaQuery->andWhere('m.file_type = :type')
@@ -76,6 +78,50 @@ class MediaController extends AbstractController
         if ($name = $request->query->get('name')) {
             $mediaQuery->andWhere('m.file_name LIKE :name')
                 ->setParameter('name', '%' . $name . '%'); // Partial match using wildcards
+        }
+
+        if ($userId = $request->query->get('user')) {
+            $mediaQuery->andWhere("m.user = :user")
+                ->setParameter('user',$userId);
+        }
+
+        if ($tag = $request->query->get('tag')) {
+            $mediaQuery->join('m.tags', 't')
+            ->andWhere('t.name = :tag')
+            ->setParameter('tag', $tag);
+        }
+
+        if ($dateFilter = $request->query->get('date')) {
+            $now = new \DateTime();
+
+            switch ($dateFilter) {
+                case '24hours':
+                    $mediaQuery->andWhere('m.created_at >= :dateLimit')
+                        ->setParameter('dateLimit', (clone $now)->modify('-1 day'));
+                    break;
+                case 'lastWeek':
+                    $mediaQuery->andWhere('m.created_at >= :dateLimit')
+                        ->setParameter('dateLimit', (clone $now)->modify('-7 days'));
+                    break;
+                case 'lastMonth':
+                    $mediaQuery->andWhere('m.created_at >= :dateLimit')
+                        ->setParameter('dateLimit', (clone $now)->modify('-1 month'));
+                    break;
+                case 'lastThreeMonths':
+                    $mediaQuery->andWhere('m.created_at >= :dateLimit')
+                        ->setParameter('dateLimit', (clone $now)->modify('-3 months'));
+                    break;
+                case 'lastSixMonths':
+                    $mediaQuery->andWhere('m.created_at >= :dateLimit')
+                        ->setParameter('dateLimit', (clone $now)->modify('-6 months'));
+                    break;
+                case "lastYear":
+                    $mediaQuery->andWhere('m.created_at >= :dateLimit')
+                        ->setParameter('dateLimit', (clone $now)->modify('-1 year'));
+                    break;
+                default:
+                    break;
+            }
         }
 
 // Add more filters or criteria as needed
@@ -115,6 +161,8 @@ class MediaController extends AbstractController
         $totalItems = $em->getRepository(Media::class)
             ->createQueryBuilder('m')
             ->select('count(m.id)')
+            ->where('m.is_current_version = :is_current_version')
+            ->setParameter('is_current_version', true)
             ->getQuery()
             ->getSingleScalarResult();
 
@@ -123,7 +171,11 @@ class MediaController extends AbstractController
             'name' => $m->getFileName(),
             'file' => $m->getFileType(),
             'uploadedDate' => $m->getCreatedAt()->format('Y-m-d H:i:s'),
+            'extension' => explode('.', $m->getStoragePath())[1],
             'size' => $m->getFileSize(),
+            'fileVersions' => $m->getVersion(),
+            'tags' => $m->getTags(),
+            'author' => $m->getUser()->getName(),
             'preview' => $this->generatePreview($m),
             'downloadUrl' => $this->generateUrl('download_media', ['id' => $m->getId()]),
         ], $mediaList);
@@ -133,7 +185,7 @@ class MediaController extends AbstractController
             'totalItems' => $totalItems,
             'currentPage' => $page,
             'itemsPerPage' => $limit,
-        ]);
+        ], 200, [], ['groups' => ['media_read']]);
     }
 
     private function generatePreview(Media $media): ?string
@@ -187,7 +239,6 @@ class MediaController extends AbstractController
             $response = new BinaryFileResponse($filePath);
             $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $media->getFileName() . $extension);
             return $response;
-            
     }
 
     #[Route('/media/download-multiple', name: 'download_multiple', methods: ['POST'])]
@@ -196,6 +247,7 @@ class MediaController extends AbstractController
         $fileIds = $request->getPayload()->all('files');
         $files = [];
         foreach ($fileIds as $fileId) {
+
             $file = $em->getRepository(Media::class)->find($fileId);
             $files[] = $file;
         }
@@ -216,9 +268,11 @@ class MediaController extends AbstractController
             return new JsonResponse(['error'=>'ZIP file does not exist'], Response::HTTP_NOT_FOUND);
         }
         foreach ($files as $file) {
+            $fileName = explode(".", $file->getStoragePath());
+            $extension = "." . $fileName[1];
             $filePath = $this->getParameter('kernel.project_dir') . '/public/uploads' . $file->getStoragePath();
             if (file_exists($filePath)) {
-                $zip->addFile($filePath, $file->getFileName());
+                $zip->addFile($filePath, $file->getFileName() . $extension);
             }
         }
 
@@ -254,7 +308,7 @@ class MediaController extends AbstractController
         return $this->json($media, 200, [], ['groups' => ['media_read']]);
     }
 
-    #[Route('/media/{id}/delete', name: 'delete_media')]
+    #[Route('/media/{id}/delete', name: 'delete_media', methods: ['DELETE'])]
     public function deleteMedia(EntityManagerInterface $em, Media $media,MessageBusInterface $messageBus): JsonResponse
     {
         $file = $em->getRepository(Media::class)->find($media->getId());
@@ -379,6 +433,10 @@ class MediaController extends AbstractController
         if ($fileType === FileType::IMAGE ) {
             $media->setThumbnailPath('/uploads/thumbnails/' . $newFilename);
         }elseif ($fileType === FileType::VIDEO){
+            $thumbnailFilename = pathinfo($newFilename, PATHINFO_FILENAME) . '.jpg';
+            $media->setThumbnailPath('/uploads/thumbnails/' . $thumbnailFilename);
+        }
+        else if ($fileType === FileType::VIDEO) {
             $thumbnailFilename = pathinfo($newFilename, PATHINFO_FILENAME) . '.jpg';
             $media->setThumbnailPath('/uploads/thumbnails/' . $thumbnailFilename);
         }

@@ -34,7 +34,7 @@ const Dashboard = () => {
 
     const handleSearch = async (filters) => {
         try {
-            const { name, type, size } = filters;
+            const { name, type, size, user, tag, date } = filters;
             const response = await axios.get('http://localhost:9000/media/filter', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -43,10 +43,12 @@ const Dashboard = () => {
                     name: name || undefined,
                     type: type || undefined,
                     size: size || undefined,
+                    user: user || undefined,
+                    tag: tag || undefined,
+                    date: date || undefined,
                     page, // Send the current page number with the search
                 }
             });
-
             if (response.data && response.data.data) {
                 setFiles(response.data.data);
                 setTotalPages(Math.ceil(response.data.totalItems / response.data.itemsPerPage));
@@ -105,7 +107,7 @@ const Dashboard = () => {
                         <h2>Your Uploaded Files</h2>
                     </div>
                     <SearchFilter onSearch={handleSearch} />
-                    <FileTable files={files} />
+                    <FileTable files={files} onDeleteSuccess={handleUploadSuccess}/>
                     <div className="pagination">
                         <button
                             disabled={page === 1}
