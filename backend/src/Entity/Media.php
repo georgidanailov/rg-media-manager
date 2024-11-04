@@ -41,9 +41,11 @@ class Media
     private ?int $file_size = null;
 
     #[ORM\Column(enumType: FileType::class)]
+    #[Groups(['media_read'])]
     private ?FileType $file_type = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['media_read'])]
     private ?\DateTimeInterface $created_at = null;
 
     #[ORM\Column(length: 500, nullable: true)]
@@ -77,6 +79,7 @@ class Media
     private ?bool $is_current_version = null;
 
     #[ORM\Column]
+    #[Groups(['media_read'])]
     private ?int $version = 1;
 
 
