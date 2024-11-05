@@ -3,12 +3,18 @@ import FileTable from './FileTable';
 import SearchFilter from './SearchFilter';
 import FileUpload from "./FileUpload";
 import axios from 'axios';
+import {useNavigate} from "react-router-dom";
 
 const Dashboard = () => {
     const [files, setFiles] = useState([]);
     const [refreshFiles, setRefreshFiles] = useState(false); // State to trigger a refresh after upload
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        navigate('/logout');
+    };
 
     const fetchAllFiles = async () => {
         try {
@@ -79,34 +85,35 @@ const Dashboard = () => {
         <div className="container-fluid">
             <div className="row">
                 {/* Sidebar */}
-                <div className="col-md-3 col-lg-2 d-none d-md-block bg-light sidebar">
-                    <div className="d-flex flex-column p-3">
-                        <h4 className="mb-4">Library</h4>
-                        <ul className="nav flex-column">
-                            <li className="nav-item mb-2">
-                                <a href="/frontend/public" className="nav-link text-dark">
-                                    <i className="bi bi-folder-fill me-2"></i>Folder 1
-                                </a>
-                            </li>
-                            <li className="nav-item mb-2">
-                                <a href="/frontend/public" className="nav-link text-dark">
-                                    <i className="bi bi-folder-fill me-2"></i>Folder 2
-                                </a>
-                            </li>
-                            <li className="nav-item mb-2">
-                                <a href="/frontend/public" className="nav-link text-dark">
-                                    <i className="bi bi-folder-fill me-2"></i>Folder 3
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+                {/*<div className="col-md-3 col-lg-2 d-none d-md-block bg-light sidebar">*/}
+                {/*    <div className="d-flex flex-column p-3">*/}
+                {/*        <h4 className="mb-4">Library</h4>*/}
+                {/*        <ul className="nav flex-column">*/}
+                {/*            <li className="nav-item mb-2">*/}
+                {/*                <a href="/frontend/public" className="nav-link text-dark">*/}
+                {/*                    <i className="bi bi-folder-fill me-2"></i>Folder 1*/}
+                {/*                </a>*/}
+                {/*            </li>*/}
+                {/*            <li className="nav-item mb-2">*/}
+                {/*                <a href="/frontend/public" className="nav-link text-dark">*/}
+                {/*                    <i className="bi bi-folder-fill me-2"></i>Folder 2*/}
+                {/*                </a>*/}
+                {/*            </li>*/}
+                {/*            <li className="nav-item mb-2">*/}
+                {/*                <a href="/frontend/public" className="nav-link text-dark">*/}
+                {/*                    <i className="bi bi-folder-fill me-2"></i>Folder 3*/}
+                {/*                </a>*/}
+                {/*            </li>*/}
+                {/*        </ul>*/}
+                {/*    </div>*/}
+                {/*</div>*/}
                 {/* Main Content */}
-                <div className="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div className="px-md-4">
                     <div className="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
                         <h2>Your Uploaded Files</h2>
+                        <button onClick={handleLogout} className="btn btn-success">Logout</button>
                     </div>
-                    <SearchFilter onSearch={handleSearch} />
+                    <SearchFilter onSearch={handleSearch}/>
                     <FileTable files={files} onDeleteSuccess={handleUploadSuccess}/>
                     <div className="pagination">
                         <button

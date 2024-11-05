@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {jwtDecode} from "jwt-decode";
 import axios from "axios";
 
@@ -13,6 +13,55 @@ else {
     console.log('no token found');
 }
 const FileTable = ({ files, onDeleteSuccess }) => {
+
+    const [selectedFiles, setSelectedFiles] = useState({});
+
+    const allSelected = Object.values(selectedFiles).every(isSelected => isSelected);
+    const handleCheckboxChange = (fileId) => {
+        setSelectedFiles(prev => ({
+            ...prev,
+            [fileId]: !prev[fileId]
+        }));
+    };
+
+    const handleSelectAll = () => {
+        const newSelectedFiles = {};
+        files.forEach(file=> {
+            newSelectedFiles[file.id] = !allSelected;
+        });
+        setSelectedFiles(newSelectedFiles);
+    }
+
+    const handleDownloadSelected = async () => {
+        const selectedFileIds = Object.keys(selectedFiles).filter(fileId => selectedFiles[fileId]);
+
+        if (selectedFileIds.length === 0) {
+            alert("No Files selected for download.");
+            return;
+        }
+
+        try {
+            const response = await axios.post('http://localhost:9000/media/download-multiple',
+                {files: selectedFileIds},
+                {headers: {
+                            Authorization: `Bearer ${token}`,
+                    },
+                responseType: 'blob',
+                });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+
+            link.href = url;
+            link.download = 'files.zip';
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (error) {
+            console.error('Error downloading files:', error);
+            alert('An error occurred while trying to download the files.');
+        }
+    };
+
     // Function to convert file size from bytes to megabytes
     const formatSize = (sizeInBytes) => {
         const sizeInMB = sizeInBytes / (1024 * 1024);
@@ -67,6 +116,11 @@ const FileTable = ({ files, onDeleteSuccess }) => {
     return (
         <div className="table-responsive">
 
+            <button className="btn btn-success mb-3" onClick={handleSelectAll}>
+                {allSelected ? "Deselect All" : "Select All"}
+            </button>
+            <button className="btn btn-success mb-3 ms-3" onClick={handleDownloadSelected}>Download Selected</button>
+
             <table className="table table-striped table-hover table-bordered">
                 <thead className="table-light">
                 <tr>
@@ -92,7 +146,7 @@ const FileTable = ({ files, onDeleteSuccess }) => {
                 {files.length > 0 ? (
                     files.map((file) => (
                         <tr key={file.id}>
-                            <td><input className="form-check-input" id="custom-checkbox" type="checkbox" style={{width: "20px", height: "20px"}}/></td>
+                            <td><input className="form-check-input" id="custom-checkbox" checked={selectedFiles[file.id] || false} onChange={() => handleCheckboxChange(file.id)} type="checkbox" style={{width: "20px", height: "20px"}}/></td>
                             <td>{file.name}</td>
                             <td>{file.file}</td>
                             <td>{new Date(file.uploadedDate).toLocaleString()}</td>
@@ -118,11 +172,11 @@ const FileTable = ({ files, onDeleteSuccess }) => {
                             <td>{file.fileVersions}</td>
                             ) : null}
                             <td>
-                                <button className="btn btn-success btn-sm me-2">Edit</button>
+                                <button className="btn btn-success btn-sm me-2" >Edit</button>
                                 <button className="btn btn-danger btn-sm me-2" onClick={() => onDelete(file.id)}>Delete</button>
                                 <button
                                     onClick={() => onDownload(file.id, file.name, file.extension)}
-                                    className="btn btn-primary btn-sm"
+                                    className="btn btn-primary btn-sm "
                                 >
                                     Download
                                 </button>

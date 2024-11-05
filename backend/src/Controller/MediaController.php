@@ -15,6 +15,7 @@ use App\Service\MediaProcessingService;
 use App\Service\MediaService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -31,11 +32,13 @@ use function Symfony\Component\Clock\now;
 class MediaController extends AbstractController
 {
     private $mediaService;
+    private $security;
 
     // Inject MediaProcessingService into the controller
-    public function __construct(MediaService $mediaService)
+    public function __construct(MediaService $mediaService, Security $security)
     {
         $this->mediaService = $mediaService;
+        $this->security = $security;
     }
 
     #[Route('/media', name: 'get_all_media', methods: ['GET'])]
@@ -62,12 +65,14 @@ class MediaController extends AbstractController
     public function filterMedia(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $criteria = [];
+        $user = $this->security->getUser();
 
         $mediaQuery = $em->getRepository(Media::class)
             ->createQueryBuilder('m')
             ->where('m.is_current_version = :is_current_version')
             ->andWhere('m.deleted_at IS NULL')
             ->setParameter('is_current_version', true);
+
 // Filter by file type if provided
         if ($type = $request->query->get('type')) {
             $mediaQuery->andWhere('m.file_type = :type')
@@ -318,6 +323,7 @@ class MediaController extends AbstractController
 
         if ($file->getUser() == $this->getUser() || $this->isGranted('ROLE_ADMIN') || $this->isGranted('ROLE_MODERATOR')) {
             $file->setDeletedAt(new \DateTime('now'));
+            $file->getUser()->setUsedStorage($file->getUser()->getUsedStorage() - $file->getFileSize());
             $em->flush();
 
             if($this->isGranted('ROLE_ADMIN') || $this->isGranted('ROLE_MODERATOR') ){
@@ -336,6 +342,8 @@ class MediaController extends AbstractController
     {
         $file = $request->files->get('file');
         $user = $this->getUser();
+
+        $storageUser = $em->getRepository(User::class)->find($user->getId());
 
 
         if (!$file instanceof UploadedFile) {
@@ -413,13 +421,16 @@ class MediaController extends AbstractController
             return new JsonResponse(['error' => 'File is too large'], Response::HTTP_BAD_REQUEST);
         }
 
+        if ($file->getSize() + $storageUser->getUsedStorage() > $storageUser->getQuota()) {
+            return new JsonResponse(['error' => 'You have exceeded your storage quota'], Response::HTTP_BAD_REQUEST);
+        }
 
         $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $safeFilename = $slugger->slug($originalFilename);
         $newFilename = $safeFilename . '-' . uniqid() . '.' . $file->guessExtension();
 
         $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads';
-
+        $storageUser->setUsedStorage($storageUser->getUsedStorage() + $file->getSize());
         $media = new Media();
         $media->setUser($user);
         $media->setFilename($originalFilename);
@@ -533,6 +544,9 @@ class MediaController extends AbstractController
         $originalFile = $em->getRepository(Media::class)->find($media->getId());
         $user = $this->getUser();
 
+        $storageUser = $originalFile->getUser();
+
+
         if (!$originalFile){
             return new JsonResponse(['error' => 'Media not found'], Response::HTTP_NOT_FOUND);
         }
@@ -613,6 +627,12 @@ class MediaController extends AbstractController
 
         };
 
+        if ($newFile->getSize()+$storageUser->getUsedStorage() > $storageUser->getQuota()) {
+            return new JsonResponse(['error' => 'You have exceeded your storage quota'], Response::HTTP_BAD_REQUEST);
+        }
+
+
+
         if ($newFile->getSize() > $maxFileSize) {
             return new JsonResponse(['error' => 'File is too large'], Response::HTTP_BAD_REQUEST);
         }
@@ -624,7 +644,7 @@ class MediaController extends AbstractController
 
         $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads';
 
-
+        $storageUser->setUsedStorage($storageUser->getUsedStorage() + $newFile->getSize());
         $newVersionFile = new Media();
         $newVersionFile->setFileName($newFile->getClientOriginalName());
         $newVersionFile->setStoragePath('/' . $newFilename);

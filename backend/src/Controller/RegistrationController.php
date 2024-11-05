@@ -25,7 +25,7 @@ class RegistrationController extends AbstractController
         $user->setEmail($data['email']);
         $user->setPassword($userPasswordHasher->hashPassword($user, $data['password']));
         $user->setRoles(['ROLE_USER']);
-        $user->setQuota(100);
+        $user->setQuota(104857600);
         $user->setUsedStorage(0);
         $user->setInfectedFileCount(0);
         $user->setLocked(false);
