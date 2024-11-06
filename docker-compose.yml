@@ -4,6 +4,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        ELASTICSEARCH_HOST: 'http://elasticsearch:9200'
     container_name: symfony_php
     volumes:
       - ./backend:/var/www/symfony
@@ -76,9 +78,6 @@ services:
       - "3310:3310"
     networks:
       - app_network
-    volumes:
-      - clamav_data:/var/lib/clamav/
-
 
   worker:
     image: rg-media-manager-backend:latest
@@ -104,6 +103,19 @@ services:
 #    networks:
 #      - app_network
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    ports:
+      - "9200:9200"
+    networks:
+      - app_network
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
 networks:
   app_network:
     driver: bridge
@@ -111,3 +123,4 @@ networks:
 volumes:
   database_data:
   clamav_data:
+  es_data:
