@@ -160,7 +160,7 @@ const FileTable = ({ files, onDeleteSuccess }) => {
                             <td>
                                 {file.preview ? (
                                     <img
-                                        src={`http://localhost:9000${file.preview}`} // Ensure the preview path is correct
+                                        src={`http://localhost:9000${file.preview}`}
                                         alt={file.name}
                                         style={{ width: '100px', height: 'auto' }}
                                     />

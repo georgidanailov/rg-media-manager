@@ -13,9 +13,17 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Service\ActivityLogger;
 
 class RegistrationController extends AbstractController
 {
+    private ActivityLogger $activityLogger;
+
+    public function __construct(ActivityLogger $activityLogger)
+    {
+        $this->activityLogger = $activityLogger;
+    }
+
     #[Route('/register', name: 'app_register', methods: ['POST'])]
     public function register(Request $request, UserPasswordHasherInterface $userPasswordHasher, Security $security, EntityManagerInterface $entityManager): JsonResponse
     {
@@ -32,6 +40,13 @@ class RegistrationController extends AbstractController
 
         $entityManager->persist($user);
         $entityManager->flush();
+
+        // Log the registration activity
+        $this->activityLogger->logActivity('user_registration', [
+            'user_id' => $user->getId(),
+            'email' => $user->getEmail(),
+            'name' => $user->getName(),
+        ]);
 
         return new JsonResponse(['message' => 'User registered successfully'], 200);
     }

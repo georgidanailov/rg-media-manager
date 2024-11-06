@@ -44,6 +44,9 @@ COPY . .
 # Ensure Symfony Flex is installed
 RUN composer require symfony/flex --no-scripts
 
+ARG ELASTICSEARCH_HOST
+ENV ELASTICSEARCH_HOST=$ELASTICSEARCH_HOST
+
 # Install Symfony dependencies with superuser permission
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install
 

@@ -1,0 +1,10 @@
+parameters:
+  elasticsearch.host: '%env(default::ELASTICSEARCH_HOST)%'
+
+services:
+  App\Service\ElasticsearchClient:
+    arguments:
+      $host: '%elasticsearch.host%'
+  App\Service\ActivityLogger:
+    arguments:
+      $elasticsearchClient: '@App\Service\ElasticsearchClient'
