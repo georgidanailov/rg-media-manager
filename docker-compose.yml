@@ -78,6 +78,9 @@ services:
       - "3310:3310"
     networks:
       - app_network
+    volumes:
+      - /tmp/clamav_data:/var/lib/clamav  # Anonymous volume within container
+
 
   worker:
     image: rg-media-manager-backend:latest
