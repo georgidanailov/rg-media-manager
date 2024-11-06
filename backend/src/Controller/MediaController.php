@@ -240,6 +240,14 @@ class MediaController extends AbstractController
             return new JsonResponse(['message'=>'Access Denied'], Response::HTTP_FORBIDDEN);
         }
 
+        $this->activityLogger->logActivity('file_download', [
+            'user_id' => $user->getId(),
+            'file_name' => $media->getFilename(),
+            'file_size' => $media->getFileSize(),
+            'file_type' => $media->getFileType()->value,
+            'timestamp' => (new \DateTime())->format('Y-m-d\TH:i:s.uP'),
+        ]);
+
             $fileName = explode(".", $media->getStoragePath());
             $extension = "." . $fileName[1];
 
@@ -254,10 +262,21 @@ class MediaController extends AbstractController
     {
         $fileIds = $request->getPayload()->all('files');
         $files = [];
+        $user = $this->getUser();
+
         foreach ($fileIds as $fileId) {
 
             $file = $em->getRepository(Media::class)->find($fileId);
             $files[] = $file;
+
+            // Log the download activity for each file
+            $this->activityLogger->logActivity('file_download', [
+                'user_id' => $user->getId(),
+                'file_name' => $file->getFilename(),
+                'file_size' => $file->getFileSize(),
+                'file_type' => $file->getFileType()->value,
+                'timestamp' => (new \DateTime())->format('Y-m-d\TH:i:s.uP'),
+            ]);
         }
         return $this->downloadMultipleFiles($files);
     }
@@ -320,6 +339,8 @@ class MediaController extends AbstractController
     public function deleteMedia(EntityManagerInterface $em, Media $media,MessageBusInterface $messageBus): JsonResponse
     {
         $file = $em->getRepository(Media::class)->find($media->getId());
+        $user = $this->getUser();
+
         if (!$file) {
             return new JsonResponse(['message' => 'Media not found'], 404);
         }
@@ -333,6 +354,14 @@ class MediaController extends AbstractController
 
                 $messageBus->dispatch(new FileDeletedMessage($media->getUser()->getId(), $file->getFileName()));
             }
+
+            $this->activityLogger->logActivity('file_delete', [
+                'user_id' => $user->getId(),
+                'file_name' => $file->getFilename(),
+                'file_size' => $file->getFileSize(),
+                'file_type' => $file->getFileType()->value,
+                'deleted_at' => (new \DateTime())->format('Y-m-d\TH:i:s.uP'),
+            ]);
 
             return new JsonResponse(['message' => 'Media deleted'], 200);
         }

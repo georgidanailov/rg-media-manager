@@ -11,17 +11,21 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use App\Entity\User;
+use App\Service\ActivityLogger;
 
 #[AsMessageHandler]
 class ScanFileMessageHandler
 {
     private $em;
     private MailerInterface $mailer;
+    private ActivityLogger $activityLogger;
 
-    public function __construct(EntityManagerInterface $em, MailerInterface $mailer)
+
+    public function __construct(EntityManagerInterface $em, MailerInterface $mailer, ActivityLogger $activityLogger)
     {
         $this->em = $em;
         $this->mailer = $mailer;
+        $this->activityLogger = $activityLogger;
     }
 
     /**
@@ -64,6 +68,14 @@ class ScanFileMessageHandler
 
             $this->em->persist($notification);
             $this->em->flush();
+
+            $this->activityLogger->logActivity('forbidden_activity', [
+                'user_id' => $user->getId(),
+                'email' => $user->getEmail(),
+                'reason' => 'Virus detected in uploaded file',
+                'file_path' => $filePath,
+                'timestamp' => (new \DateTime())->format(\DateTimeInterface::ISO8601),
+            ]);
         }
     }
 }
