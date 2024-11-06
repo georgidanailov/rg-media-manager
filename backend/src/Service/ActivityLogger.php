@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Service\ElasticsearchClient;
+use DateTimeInterface;
 
 class ActivityLogger
 {
@@ -19,7 +20,7 @@ class ActivityLogger
             'index' => 'activity_logs',
             'body' => [
                 'type' => $type,
-                'timestamp' => (new \DateTime())->format('Y-m-d H:i:s'),
+                'timestamp' => (new \DateTime())->format(DateTimeInterface::ISO8601),
                 'data' => $data,
             ],
         ]);

@@ -19,6 +19,8 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordC
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
+use App\Service\ActivityLogger;
+
 
 class LoginAuthenticator extends AbstractLoginFormAuthenticator
 {
@@ -26,14 +28,18 @@ class LoginAuthenticator extends AbstractLoginFormAuthenticator
 
     private JWTTokenManagerInterface $jwtManager;
     private UrlGeneratorInterface $urlGenerator;
+    private ActivityLogger $activityLogger;
+
 
     public const LOGIN_ROUTE = 'app_login';
 
 
-    public function __construct(UrlGeneratorInterface $urlGenerator, JWTTokenManagerInterface $jwtManager)
+    public function __construct(UrlGeneratorInterface $urlGenerator, JWTTokenManagerInterface $jwtManager, ActivityLogger $activityLogger)
     {
         $this->jwtManager = $jwtManager;
         $this->urlGenerator = $urlGenerator;
+        $this->activityLogger = $activityLogger;
+
     }
 
     public function authenticate(Request $request): Passport
@@ -51,6 +57,15 @@ class LoginAuthenticator extends AbstractLoginFormAuthenticator
     {
         $user = $token->getUser();
         $token = $this->jwtManager->create($user);
+
+        $this->activityLogger->logActivity('user_login', [
+            'user_id' => $user->getId(),
+            'email' => $user->getEmail(),
+            'ip_address' => $request->getClientIp(),
+            'user_agent' => $request->headers->get('User-Agent'),
+            'timestamp' => (new \DateTime())->format(\DateTimeInterface::ISO8601)
+        ]);
+
         return new JsonResponse(['token' => $token], Response::HTTP_OK);
     }
 
