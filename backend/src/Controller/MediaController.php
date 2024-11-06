@@ -27,18 +27,21 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use function Symfony\Component\Clock\now;
+use App\Service\ActivityLogger;
 
 
 class MediaController extends AbstractController
 {
     private $mediaService;
     private $security;
+    private $activityLogger;
 
     // Inject MediaProcessingService into the controller
-    public function __construct(MediaService $mediaService, Security $security)
+    public function __construct(MediaService $mediaService, Security $security, ActivityLogger $activityLogger)
     {
         $this->mediaService = $mediaService;
         $this->security = $security;
+        $this->activityLogger = $activityLogger;
     }
 
     #[Route('/media', name: 'get_all_media', methods: ['GET'])]
@@ -468,6 +471,14 @@ class MediaController extends AbstractController
         $messageBus->dispatch(new ProcessMediaMessage($media, $uploadDir));
 
         $this->saveMediaMetadata($media, $em);
+
+        $this->activityLogger->logActivity('file_upload', [
+            'user_id' => $user->getId(),
+            'file_name' => $media->getFilename(),
+            'file_size' => $media->getFileSize(),
+            'file_type' => $media->getFileType()->value,
+            'timestamp' => (new \DateTime())->format('Y-m-d H:i:s'),
+        ]);
 
         return new JsonResponse(['success' => 'file created'], Response::HTTP_OK);
 
