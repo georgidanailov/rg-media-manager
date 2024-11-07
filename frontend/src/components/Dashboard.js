@@ -4,6 +4,19 @@ import SearchFilter from './SearchFilter';
 import FileUpload from "./FileUpload";
 import axios from 'axios';
 import {useNavigate} from "react-router-dom";
+import {jwtDecode} from "jwt-decode";
+import Reports from './Reports';
+
+
+const token = localStorage.getItem('token');
+let role;
+if (token){
+    const decoded = jwtDecode(token);
+    role = decoded?.roles?.[0];
+}
+else {
+    console.log('no token found');
+}
 
 const Dashboard = () => {
     const [files, setFiles] = useState([]);
@@ -11,6 +24,7 @@ const Dashboard = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const navigate = useNavigate();
+    const [activeSection, setActiveSection] = useState('files');
 
     const handleLogout = () => {
         navigate('/logout');
@@ -110,9 +124,16 @@ const Dashboard = () => {
                 {/* Main Content */}
                 <div className="px-md-4">
                     <div className="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h2>Your Uploaded Files</h2>
+                        <div className="d-flex flex-row header-div">
+                            <h2><a href="#" className={`links text-decoration-none link-dark me-4 ${activeSection === "files" ? "active" : ""}`} onClick={() => setActiveSection('files')}>Your Uploaded Files</a></h2>
+                            {role === "ROLE_ADMIN" ? (
+                                <h2><a href="#" className={`text-decoration-none link-dark ${activeSection === "reports" ? "active" : ""}`} onClick={() => setActiveSection('reports')}>Reports</a></h2>
+                            ) : null}
+                        </div>
                         <button onClick={handleLogout} className="btn btn-success">Logout</button>
                     </div>
+                    {activeSection === "files" ? (
+                        <>
                     <SearchFilter onSearch={handleSearch}/>
                     <FileTable files={files} onDeleteSuccess={handleUploadSuccess}/>
                     <div className="pagination">
@@ -133,6 +154,10 @@ const Dashboard = () => {
                         </button>
                     </div>
                     <FileUpload onUploadSuccess={handleUploadSuccess} />
+                        </>
+                        ) : (
+                            <Reports />
+                        )}
                 </div>
             </div>
         </div>

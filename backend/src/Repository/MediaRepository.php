@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Media;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -48,6 +49,35 @@ class MediaRepository extends ServiceEntityRepository
             ->setParameter('date', $date)
             ->getQuery()
             ->getResult();
+    }
+
+    public function getTotalStoragePerUser()
+    {
+        $qb = $this->getEntityManager()->createQueryBuilder();
+
+        $qb->select('u.id AS user_id, u.name, SUM(m.file_size) AS totalStorage')
+            ->from('App\Entity\Media', 'm')
+            ->leftJoin('m.user', 'u')
+            ->groupBy('u.id')
+            ->orderBy('totalStorage', 'DESC');
+
+        return $qb->getQuery()->getArrayResult();
+    }
+
+    public function getFileTypesPerUser(): array
+    {
+        $qb = $this->getEntityManager()->createQueryBuilder();
+        $qb->select('u.id as user_id', 'u.name',
+            "SUM(CASE WHEN m.file_type = 'image' THEN 1 ELSE 0 END) as images",
+            "SUM(CASE WHEN m.file_type = 'video' THEN 1 ELSE 0 END) as videos",
+            "SUM(CASE WHEN m.file_type = 'document' THEN 1 ELSE 0 END) as documents",
+            "SUM(CASE WHEN m.file_type = 'archive' THEN 1 ELSE 0 END) as archives")
+            ->from('App\Entity\User', 'u')
+            ->leftJoin('u.media', 'm')
+            ->groupBy('u.id');
+
+        return $qb->getQuery()->getArrayResult();
+
     }
 
 }

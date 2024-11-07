@@ -1,0 +1,46 @@
+#totalStorageChart{
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+.storageChartDiv{
+    margin-top: 50px;
+    margin-left: 40px;
+    box-shadow: 10px 10px 64px -15px rgba(163,163,163,1);
+    padding: 15px;
+    border-radius: 15px;
+    width: 600px;
+    height: 550px;
+    text-align: center;
+}
+
+#fileTypeChart{
+    margin-left: 70px;
+    margin-top: 50px;
+    width: 90%;
+    height: 80%;
+    align-content: center;
+}
+
+.fileChartDiv{
+    margin-top: 50px;
+    margin-left: 40px;
+    box-shadow: 10px 10px 64px -15px rgba(163,163,163,1);
+    padding: 15px;
+    border-radius: 15px;
+    justify-content: flex-end;
+    width: 1050px;
+    height: 550px;
+    margin-right: 40px;
+    text-align: center;
+}
+
+.main-container{
+    display: flex;
+    flex-direction: column;
+}
+
+.charts-row{
+    display: flex;
+    flex-direction: row;
+}

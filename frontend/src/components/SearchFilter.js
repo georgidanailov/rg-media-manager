@@ -174,7 +174,7 @@ const SearchFilter = ({ onSearch }) => {
             </div>
             ) : null}
             <div className="col-md-2">
-                <button className="btn btn-success w-100 mt-3"
+                <button className="btn btn-success w-100 mt-1"
                         onClick={() => onSearch({name: searchTerm, type: fileType, size: fileSize})}>
                     Search
                 </button>

@@ -4,6 +4,7 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Register from './components/Register';
 import Logout from "./components/Logout";
+import './index.css';
 
 function App() {
     return (
