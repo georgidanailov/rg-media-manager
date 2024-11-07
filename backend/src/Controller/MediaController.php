@@ -68,13 +68,19 @@ class MediaController extends AbstractController
     public function filterMedia(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $criteria = [];
-        $user = $this->security->getUser();
+        $user = $this->getUser()->getUserIdentifier();
+        $loggedUser = $em->getRepository(User::class)->findOneBy(['email' => $user]);
 
         $mediaQuery = $em->getRepository(Media::class)
             ->createQueryBuilder('m')
             ->where('m.is_current_version = :is_current_version')
             ->andWhere('m.deleted_at IS NULL')
             ->setParameter('is_current_version', true);
+
+        if (!in_array('ROLE_ADMIN', $loggedUser->getRoles()) && !in_array('ROLE_MODERATOR', $loggedUser->getRoles())) {
+            $mediaQuery->andWhere('m.user = :userid')
+            ->setParameter('userid', $loggedUser->getId());
+        }
 
 // Filter by file type if provided
         if ($type = $request->query->get('type')) {
