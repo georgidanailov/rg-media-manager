@@ -19,4 +19,5 @@ class ElasticsearchClient
     {
         return $this->client;
     }
+
 }
