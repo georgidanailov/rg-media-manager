@@ -28,6 +28,11 @@ security:
             stateless: true
             provider: app_user_provider
             jwt: ~
+        report:
+            pattern: ^/report
+            stateless: true
+            provider: app_user_provider
+            jwt: ~
         medias:
             pattern: ^/medias
             stateless: true
