@@ -29,12 +29,23 @@ class FileUploadedMessageHandler
         if (!$user) {
             throw new \Exception('User not found.');
         }
-        
+
+        $usedStorage = $user-> getUsedStorage(); // bytes
+        $quota = $user->getQuota(); // bytes
+        $remainingStorage = $quota - $usedStorage;
+
+        $usedStorageMB = round($usedStorage / (1024 * 1024), 2);
+        $remainingStorageMB = round($remainingStorage / (1024 * 1024), 2);
+        $quotaMB = round($quota / (1024 * 1024), 2);
+
         $email = (new Email())
             ->from('no-reply@example.com')
             ->to($user->getEmail())
             ->subject('File Uploaded Successfully')
-            ->text('Your file has been successfully uploaded.');
+            ->text("Your file has been successfully uploaded.\n\n"
+                . "You have used $usedStorageMB MB out of your $quotaMB MB quota.\n"
+                . "You have $remainingStorageMB MB remaining.");
+
         $this->mailer->send($email);
 
 
