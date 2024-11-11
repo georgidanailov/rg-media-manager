@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import backgroundImage from '../images/login-bg.jpg'; // Adjust path based on your project structure
 
 const Register = () => {
     const [name, setName] = useState('');
@@ -24,7 +25,6 @@ const Register = () => {
                 }
             });
 
-            // If registration is successful, redirect to login or display a success message
             setSuccessMessage('Registration successful! Please log in.');
             setError(''); // Clear any previous error messages
 
@@ -39,19 +39,27 @@ const Register = () => {
     };
 
     return (
-        <div className="container vh-100 d-flex justify-content-center align-items-center">
-            <div className="card p-4 shadow" style={{ width: '100%', maxWidth: '400px' }}>
-                <h1 className="h3 mb-3 font-weight-normal text-center">Register</h1>
+        <div
+            className="login"
+            style={{
+                backgroundImage: `url(${backgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundAttachment: 'fixed',
+            }}
+        >
+            <div className="login-container">
+                <h2 className="login__title">Register</h2>
 
-                {error && <div className="alert alert-danger">{error}</div>}
-                {successMessage && <div className="alert alert-success">{successMessage}</div>}
+                {error && <div className="error">{error}</div>}
+                {successMessage && <div className="success">{successMessage}</div>}
 
                 <form onSubmit={handleSubmit}>
-                    <div className="mb-3">
-                        <label htmlFor="inputName" className="form-label">Name</label>
+                    <div className="login__box">
+                        <label htmlFor="inputName" className="login__label">Name</label>
                         <input
                             type="text"
-                            className="form-control"
+                            className="login__input"
                             id="inputName"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
@@ -60,11 +68,11 @@ const Register = () => {
                         />
                     </div>
 
-                    <div className="mb-3">
-                        <label htmlFor="inputEmail" className="form-label">Email</label>
+                    <div className="login__box">
+                        <label htmlFor="inputEmail" className="login__label">Email</label>
                         <input
                             type="email"
-                            className="form-control"
+                            className="login__input"
                             id="inputEmail"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -73,11 +81,11 @@ const Register = () => {
                         />
                     </div>
 
-                    <div className="mb-3">
-                        <label htmlFor="inputPassword" className="form-label">Password</label>
+                    <div className="login__box">
+                        <label htmlFor="inputPassword" className="login__label">Password</label>
                         <input
                             type="password"
-                            className="form-control"
+                            className="login__input"
                             id="inputPassword"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -86,10 +94,10 @@ const Register = () => {
                         />
                     </div>
 
-                    <button className="btn btn-primary w-100" type="submit">Register</button>
+                    <button className="login__button" type="submit">Register</button>
                 </form>
 
-                <p className="mt-3 text-center">
+                <p className="login__register">
                     Already have an account? <a href="/login">Log in</a>
                 </p>
             </div>
