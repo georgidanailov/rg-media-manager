@@ -25,4 +25,13 @@ return [
     '@hotwired/turbo' => [
         'version' => '7.3.0',
     ],
+    'axios' => [
+        'version' => '1.7.7',
+    ],
+    'jwt-decode' => [
+        'version' => '4.0.0',
+    ],
+    'react' => [
+        'version' => '18.3.1',
+    ],
 ];

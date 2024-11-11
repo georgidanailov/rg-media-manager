@@ -31,7 +31,102 @@ nelmio_api_doc:
                     responses:
                         '302':
                             description: "User logged out"
+            /media:
+                get:
+                    tags: ["Media"]
+                    summary: "Retrieve a list of media files"
+                    responses:
+                        '200':
+                            description: "List of media files"
+                            content:
+                                application/json:
+                                    schema:
+                                        type: array
+                                        items:
+                                            $ref: '#/components/schemas/Media'
+                        '403':
+                            description: "Access denied"
+
+            /media/filter:
+                get:
+                    tags: ["Media"]
+                    summary: "Filter media files based on various criteria"
+                    parameters:
+                        - name: type
+                          in: query
+                          description: "File type"
+                          schema:
+                              type: string
+                        - name: name
+                          in: query
+                          description: "Partial file name match"
+                          schema:
+                              type: string
+                        - name: user
+                          in: query
+                          description: "User ID"
+                          schema:
+                              type: integer
+                        - name: tag
+                          in: query
+                          description: "Tag name"
+                          schema:
+                              type: string
+                        - name: date
+                          in: query
+                          description: "Date filter (e.g., 24hours, lastWeek)"
+                          schema:
+                              type: string
+                    responses:
+                        '200':
+                            description: "Filtered list of media"
+                            content:
+                                application/json:
+                                    schema:
+                                        type: array
+                                        items:
+                                            $ref: '#/components/schemas/Media'
+                        '403':
+                            description: "Access denied"
+
+            # More paths here ...
+
+        components:
+            schemas:
+                Media:
+                    type: object
+                    properties:
+                        id:
+                            type: integer
+                            description: "Unique identifier for the media file"
+                        fileName:
+                            type: string
+                            description: "Original file name"
+                        fileSize:
+                            type: integer
+                            description: "Size of the file in bytes"
+                        fileType:
+                            type: string
+                            description: "Type of the file (e.g., image, video, document)"
+                        createdAt:
+                            type: string
+                            format: date-time
+                            description: "Timestamp when the media was created"
+                        tags:
+                            type: array
+                            items:
+                                type: string
+                                description: "Tags associated with the media file"
+                        user:
+                            type: object
+                            properties:
+                                id:
+                                    type: integer
+                                    description: "User ID of the file owner"
+                                name:
+                                    type: string
+                                    description: "Name of the file owner"
+                    description: "Media file schema representing a file uploaded by a user"
 
     areas:
-        # List of areas to include in the documentation
-        path_patterns: [ '^/api', '^/login', '^/logout' ]
+        path_patterns: [ '^/api', '^/login', '^/logout', '^/media', '^/medias' ]
