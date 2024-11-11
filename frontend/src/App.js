@@ -5,6 +5,8 @@ import Dashboard from './components/Dashboard';
 import Register from './components/Register';
 import Logout from "./components/Logout";
 import './index.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
 
 function App() {
     return (

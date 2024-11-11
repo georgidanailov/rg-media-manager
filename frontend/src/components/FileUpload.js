@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import '../FileUpload.css';
 
 const FileUpload = ({ onUploadSuccess }) => {
     const [selectedFile, setSelectedFile] = useState(null);
@@ -43,7 +44,7 @@ const FileUpload = ({ onUploadSuccess }) => {
             });
 
             if (response.status === 200) {
-                setUploadStatus('File uploaded successfully!');
+                setUploadStatus('File uploaded successfully and sent for processing!');
                 setUploadProgress(0);
 
                 const mediaId = response.data.mediaId;
@@ -89,26 +90,32 @@ const FileUpload = ({ onUploadSuccess }) => {
 
 
     return (
-        <div>
-            <h2>Upload a File</h2>
+        <div className="upload-container">
+            <h2 className="upload-title">Upload a File</h2>
             <form onSubmit={handleUpload}>
-                <input type="file" onChange={handleFileChange}/>
+                <input
+                    type="file"
+                    className="upload-form-file-input"
+                    onChange={handleFileChange}
+                />
                 <input
                     type="text"
                     placeholder="Enter tags, separated by commas"
+                    className="upload-form-tags-input"
                     value={tags}
                     onChange={handleTagsChange}
                 />
-                <button type="submit">Upload</button>
+                <button type="submit" className="upload-form-button">Upload</button>
             </form>
             {uploadProgress > 0 && (
                 <div>
-                    <p>Upload Progress: {uploadProgress}%</p>
-                    <progress value={uploadProgress} max="100"/>
+                    <p className="upload-progress-text">Upload Progress: {uploadProgress}%</p>
+                    <progress className="upload-progress-bar" value={uploadProgress} max="100"/>
                 </div>
             )}
-            {uploadStatus && <p>{uploadStatus}</p>}
+            {uploadStatus && <p className="upload-status">{uploadStatus}</p>}
         </div>
+
     );
 };
 

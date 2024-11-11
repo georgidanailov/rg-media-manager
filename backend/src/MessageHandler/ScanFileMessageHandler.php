@@ -45,7 +45,7 @@ class ScanFileMessageHandler
 
         if (preg_match('/Infected files:\s+0/', $scanResult) === 0) {
             $user->setInfectedFileCount($user->getInfectedFileCount() + 1);
-            unlink($filePath);
+//            unlink($filePath);
             if ($user->getInfectedFileCount() >= 3) {
                 $user->setLocked(true);
             }

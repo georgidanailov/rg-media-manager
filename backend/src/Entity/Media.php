@@ -49,6 +49,7 @@ class Media
     private ?\DateTimeInterface $created_at = null;
 
     #[ORM\Column(length: 500, nullable: true)]
+    #[Groups(['media_read'])]
     private ?string $thumbnail_path = null;
 
 
@@ -57,6 +58,7 @@ class Media
      * @var Collection<int, Metadata>
      */
     #[ORM\OneToMany(targetEntity: Metadata::class, mappedBy: 'file_id')]
+    #[Groups(['media_read'])]
     private Collection $metadata_type;
 
     /**
