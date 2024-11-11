@@ -26,9 +26,8 @@ const Register = () => {
             });
 
             setSuccessMessage('Registration successful! Please log in.');
-            setError(''); // Clear any previous error messages
+            setError('');
 
-            // Optionally redirect to the login page after a delay
             setTimeout(() => {
                 navigate('/login');
             }, 2000);

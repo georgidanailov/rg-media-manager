@@ -162,6 +162,8 @@ const FileTable = ({ files, onDeleteSuccess, onViewDetails }) => {
                                     <img
                                         src={`http://localhost:9000${file.preview}`}
                                         alt={file.name}
+                                        width={640}
+                                        height={360}
                                         style={{ width: '100px', height: 'auto' }}
                                     />
                                 ) : (
