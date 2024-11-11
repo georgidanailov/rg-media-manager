@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import backgroundImage from '../images/login-bg.jpg';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true); // Start loading
 
         try {
             const response = await axios.post('http://localhost:9000/login', {
@@ -24,21 +28,31 @@ const Login = () => {
             navigate('/dashboard');
         } catch (err) {
             setError('Invalid credentials, please try again.');
+        } finally {
+            setLoading(false); //Stop loading
         }
     };
 
     return (
-        <div className="container vh-100 d-flex justify-content-center align-items-center">
-            <div className="card p-4 shadow" style={{ width: '100%', maxWidth: '400px' }}>
-                <h1 className="h3 mb-3 font-weight-normal text-center">Please sign in</h1>
-                {error && <div className="alert alert-danger">{error}</div>}
+        <div
+            className="login"
+            style={{
+                backgroundImage: `url(${backgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundAttachment: 'fixed',
+            }}
+        >
+            <div className="login-container">
+                <h2 className="login__title">Please sign in</h2>
+                {error && <div className="error">{error}</div>}
 
                 <form onSubmit={handleSubmit}>
-                    <div className="mb-3">
-                        <label htmlFor="inputEmail" className="form-label">Email</label>
+                    <div className="login__box">
+                        <label htmlFor="inputEmail" className="login__label">Email</label>
                         <input
                             type="email"
-                            className="form-control"
+                            className="login__input"
                             id="inputEmail"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -47,11 +61,11 @@ const Login = () => {
                         />
                     </div>
 
-                    <div className="mb-3">
-                        <label htmlFor="inputPassword" className="form-label">Password</label>
+                    <div className="login__box">
+                        <label htmlFor="inputPassword" className="login__label">Password</label>
                         <input
                             type="password"
-                            className="form-control"
+                            className="login__input"
                             id="inputPassword"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -60,10 +74,12 @@ const Login = () => {
                         />
                     </div>
 
-                    <button className="btn btn-primary w-100" type="submit">Sign in</button>
+                    <button className="login__button" type="submit" disabled={loading}>
+                        {loading ? 'Signing in...': 'Sign in'}
+                    </button>
                 </form>
 
-                <p className="mt-3 text-center">
+                <p className="login__register">
                     Don't have an account? <a href="/register">Register</a>
                 </p>
             </div>
