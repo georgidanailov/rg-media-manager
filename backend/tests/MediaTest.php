@@ -17,7 +17,7 @@ class MediaTest extends TestCase
         $media = new Media();
 
         $this->assertNull($media->getId());
-        $this->assertNull($media->getUserId());
+        $this->assertNull($media->getUser());
         $this->assertNull($media->getFileName());
         $this->assertNull($media->getStoragePath());
         $this->assertNull($media->getFileSize());
@@ -35,8 +35,8 @@ class MediaTest extends TestCase
         $createdAt = new DateTime();
         $metadata = new Metadata();
 
-        $media->setUserId($user);
-        $this->assertSame($user, $media->getUserId());
+        $media->setUser($user);
+        $this->assertSame($user, $media->getUser());
 
         $media->setFileName('sample-file.jpg');
         $this->assertEquals('sample-file.jpg', $media->getFileName());

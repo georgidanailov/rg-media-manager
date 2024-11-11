@@ -291,7 +291,7 @@ class MediaController extends AbstractController
 
 
     #[Route('/media/{id}/download', name: 'download_media', methods: ['GET'])]
-    public function downloadMedia(Media $media, EntityManagerInterface $em): Response
+    public function downloadMedia(Media $media, EntityManagerInterface $em, Request $request): Response
     {
         $user = $this->getUser();
         if (!$media){
@@ -304,9 +304,9 @@ class MediaController extends AbstractController
 
         $this->activityLogger->logActivity('file_download', [
             'user_id' => $user->getId(),
-            'file_name' => $media->getFilename(),
-            'file_size' => $media->getFileSize(),
-            'file_type' => $media->getFileType()->value,
+            'email' => $user->getEmail(),
+            'ip_address' => $request->getClientIp(),
+            'user_agent' => $request->headers->get('User-Agent'),
             'timestamp' => (new \DateTime())->format('Y-m-d\TH:i:s.uP'),
         ]);
 
@@ -345,9 +345,9 @@ class MediaController extends AbstractController
             // Log the download activity for each file
             $this->activityLogger->logActivity('file_download', [
                 'user_id' => $user->getId(),
-                'file_name' => $file->getFilename(),
-                'file_size' => $file->getFileSize(),
-                'file_type' => $file->getFileType()->value,
+                'email' => $user->getEmail(),
+                'ip_address' => $request->getClientIp(),
+                'user_agent' => $request->headers->get('User-Agent'),
                 'timestamp' => (new \DateTime())->format('Y-m-d\TH:i:s.uP'),
             ]);
         }
@@ -438,7 +438,7 @@ class MediaController extends AbstractController
      */
 
     #[Route('/media/{id}/delete', name: 'delete_media', methods: ['DELETE'])]
-    public function deleteMedia(EntityManagerInterface $em, Media $media,MessageBusInterface $messageBus): JsonResponse
+    public function deleteMedia(EntityManagerInterface $em, Media $media,MessageBusInterface $messageBus, Request $request): JsonResponse
     {
         $file = $em->getRepository(Media::class)->find($media->getId());
         $user = $this->getUser();
@@ -459,9 +459,9 @@ class MediaController extends AbstractController
 
             $this->activityLogger->logActivity('file_delete', [
                 'user_id' => $user->getId(),
-                'file_name' => $file->getFilename(),
-                'file_size' => $file->getFileSize(),
-                'file_type' => $file->getFileType()->value,
+                'email' => $user->getEmail(),
+                'ip_address' => $request->getClientIp(),
+                'user_agent' => $request->headers->get('User-Agent'),
                 'deleted_at' => (new \DateTime())->format('Y-m-d\TH:i:s.uP'),
             ]);
 

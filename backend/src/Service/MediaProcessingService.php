@@ -30,7 +30,7 @@ class MediaProcessingService
         };
 
         // Resize the image to 300x300
-        $thumbnail = imagescale($imageResource, 300, 300);
+        $thumbnail = imagescale($imageResource, 640, 360);
 
         // Save the thumbnail with the original filename in the thumbnails directory
         $thumbnailPath = $thumbnailDir . basename($imagePath);

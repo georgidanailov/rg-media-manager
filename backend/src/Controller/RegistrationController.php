@@ -19,6 +19,7 @@ class RegistrationController extends AbstractController
 {
     private ActivityLogger $activityLogger;
 
+
     public function __construct(ActivityLogger $activityLogger)
     {
         $this->activityLogger = $activityLogger;
