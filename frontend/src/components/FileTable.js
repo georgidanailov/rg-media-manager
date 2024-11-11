@@ -44,9 +44,9 @@ const FileTable = ({ files, onDeleteSuccess, onViewDetails }) => {
             const response = await axios.post('http://localhost:9000/media/download-multiple',
                 {files: selectedFileIds},
                 {headers: {
-                            Authorization: `Bearer ${token}`,
+                        Authorization: `Bearer ${token}`,
                     },
-                responseType: 'blob',
+                    responseType: 'blob',
                 });
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
@@ -151,11 +151,11 @@ const FileTable = ({ files, onDeleteSuccess, onViewDetails }) => {
                             <td>{file.file}</td>
                             <td>{new Date(file.uploadedDate).toLocaleString()}</td>
                             {role === "ROLE_ADMIN" || role === "ROLE_MODERATOR" ? (
-                            <td>{file.author}</td>
+                                <td>{file.author}</td>
                             ) : null}
                             <td>{formatSize(file.size)}</td>
                             {role === "ROLE_ADMIN" || role === "ROLE_MODERATOR" ? (
-                            <td>{file.tags.map(tag => tag.name).join(', ') }</td>
+                                <td>{file.tags.map(tag => tag.name).join(', ') }</td>
                             ) : null}
                             <td>
                                 {file.preview ? (
@@ -169,7 +169,7 @@ const FileTable = ({ files, onDeleteSuccess, onViewDetails }) => {
                                 )}
                             </td>
                             {role === "ROLE_ADMIN" || role === "ROLE_MODERATOR" ? (
-                            <td>{file.fileVersions}</td>
+                                <td>{file.fileVersions}</td>
                             ) : null}
                             <td>
                                 <button className="btn btn-success btn-sm me-2" onClick={() => onViewDetails(file.id)} >View</button>
