@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const FileUpload = ({ onUploadSuccess }) => {
     const [selectedFile, setSelectedFile] = useState(null);
+    const [tags, setTags] = useState('');
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadStatus, setUploadStatus] = useState('');
 
@@ -10,6 +11,10 @@ const FileUpload = ({ onUploadSuccess }) => {
         setSelectedFile(event.target.files[0]);
         setUploadProgress(0);
         setUploadStatus('');
+    };
+
+    const handleTagsChange = (event) => {
+        setTags(event.target.value);
     };
 
     const handleUpload = async (event) => {
@@ -41,7 +46,9 @@ const FileUpload = ({ onUploadSuccess }) => {
                 setUploadStatus('File uploaded successfully!');
                 setUploadProgress(0);
 
-                // Trigger a refresh of the file list
+                const mediaId = response.data.mediaId;
+                await handleAddTags(mediaId);
+
                 onUploadSuccess();
             } else {
                 setUploadStatus('Failed to upload the file.');
@@ -53,17 +60,51 @@ const FileUpload = ({ onUploadSuccess }) => {
         }
     };
 
+    const handleAddTags = async (mediaId) => {
+        const intMediaId = parseInt(mediaId, 10);
+        const tagList = tags.split(',').map(tag => tag.trim().toLowerCase());
+
+        if (tagList.length > 0) {
+            try {
+                const response = await axios.post(`http://localhost:9000/media/${intMediaId}/tags`, {
+                    tags: tagList,
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (response.status === 200) {
+                    setUploadStatus('Tags added successfully.');
+                } else {
+                    setUploadStatus('Failed to add tags.');
+                }
+            } catch (error) {
+                console.error('Tag addition error:', error);
+                setUploadStatus('Error adding tags. Please try again.');
+            }
+        }
+    };
+
+
     return (
         <div>
             <h2>Upload a File</h2>
             <form onSubmit={handleUpload}>
-                <input type="file" onChange={handleFileChange} />
+                <input type="file" onChange={handleFileChange}/>
+                <input
+                    type="text"
+                    placeholder="Enter tags, separated by commas"
+                    value={tags}
+                    onChange={handleTagsChange}
+                />
                 <button type="submit">Upload</button>
             </form>
             {uploadProgress > 0 && (
                 <div>
                     <p>Upload Progress: {uploadProgress}%</p>
-                    <progress value={uploadProgress} max="100" />
+                    <progress value={uploadProgress} max="100"/>
                 </div>
             )}
             {uploadStatus && <p>{uploadStatus}</p>}

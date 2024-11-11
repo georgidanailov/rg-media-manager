@@ -79,7 +79,7 @@ services:
     networks:
       - app_network
     volumes:
-      - /tmp/clamav_data:/var/lib/clamav  # Anonymous volume within container
+      - clamav_data:/var/lib/clamav/  # Anonymous volume within container
 
 
   worker:

@@ -73,7 +73,7 @@ class TagController extends AbstractController
     }
 
     #[Route('/media/{id}/tags', name: 'add_to_media', methods: ['POST'])]
-    public function addTagsToMedia(Request $request, int $id): JsonResponse
+    public function addTagsToMedia(Request $request, string $id): JsonResponse
     {
         $media = $this->entityManager->getRepository(Media::class)->find($id);
 
