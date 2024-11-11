@@ -515,7 +515,7 @@ class MediaController extends AbstractController
             'timestamp' => (new \DateTime())->format('Y-m-d H:i:s'),
         ]);
 
-        return new JsonResponse(['success' => 'file created'], Response::HTTP_OK);
+        return new JsonResponse(['success' => 'file created', 'mediaId' => $media->getId()], Response::HTTP_OK);
 
     }
 
