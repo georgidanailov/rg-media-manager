@@ -14,6 +14,7 @@ use App\Message\VersionUploadMessage;
 use App\Service\MediaProcessingService;
 use App\Service\MediaService;
 use Doctrine\ORM\EntityManagerInterface;
+use OpenApi\Annotations as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -44,6 +45,20 @@ class MediaController extends AbstractController
         $this->activityLogger = $activityLogger;
     }
 
+    /**
+     * @Route("/media", name="get_all_media", methods={"GET"})
+     * @OA\Get(
+     *     path="/media",
+     *     summary="Retrieve a list of media files",
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of media files",
+     *         @OA\JsonContent(type="array", @OA\Items(ref=@Model(type=App\Entity\Media::class, groups={"media_read"})))
+     *     ),
+     *     @OA\Response(response=403, description="Access denied")
+     * )
+     */
+
     #[Route('/media', name: 'get_all_media', methods: ['GET'])]
     public function getMedia(Request $request, EntityManagerInterface $em): JsonResponse
     {
@@ -63,6 +78,21 @@ class MediaController extends AbstractController
 
         return $this->json($media, 200, [], ['groups' => ['media_read']]);
     }
+
+    /**
+     * @Route("/media/filter", name="filter_media", methods={"GET"})
+     * @OA\Get(
+     *     path="/media/filter",
+     *     summary="Filter media files based on various criteria",
+     *     @OA\Parameter(name="type", in="query", description="File type", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="name", in="query", description="Partial file name match", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="user", in="query", description="User ID", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="tag", in="query", description="Tag name", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="date", in="query", description="Date filter (e.g., 24hours, lastWeek)", @OA\Schema(type="string")),
+     *     @OA\Response(response=200, description="Filtered list of media"),
+     *     @OA\Response(response=403, description="Access denied")
+     * )
+     */
 
     #[Route('/media/filter', name: 'filter_media', methods: ['GET'])]
     public function filterMedia(Request $request, EntityManagerInterface $em): JsonResponse
@@ -202,6 +232,18 @@ class MediaController extends AbstractController
         ], 200, [], ['groups' => ['media_read']]);
     }
 
+    /**
+     * @Route("/media/{id}/download", name="download_media", methods={"GET"})
+     * @OA\Get(
+     *     path="/media/{id}/download",
+     *     summary="Download a media file",
+     *     @OA\Parameter(name="id", in="path", description="Media file ID", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="File downloaded successfully"),
+     *     @OA\Response(response=404, description="File not found"),
+     *     @OA\Response(response=403, description="Access denied")
+     * )
+     */
+
     private function generatePreview(Media $media): ?string
     {
         if ($media->getFileType() === FileType::IMAGE || $media->getFileType() === FileType::VIDEO) {
@@ -209,6 +251,13 @@ class MediaController extends AbstractController
         }
         return null;
     }
+
+    /**
+     * Saves metadata for media files like image resolution, video duration, etc.
+     *
+     * @param Media $media
+     * @param EntityManagerInterface $em
+     */
 
     #[Route('/media', name: 'list_media', methods: ['GET'])]
     public function listMedia(Request $request, EntityManagerInterface $em): JsonResponse
@@ -233,6 +282,13 @@ class MediaController extends AbstractController
         ]);
     }
 
+    /**
+     * Generates a thumbnail preview if the media is an image or video.
+     *
+     * @param Media $media
+     * @return string|null
+     */
+
 
     #[Route('/media/{id}/download', name: 'download_media', methods: ['GET'])]
     public function downloadMedia(Media $media, EntityManagerInterface $em): Response
@@ -242,7 +298,7 @@ class MediaController extends AbstractController
             return new JsonResponse(['message'=>'File not found'], Response::HTTP_NOT_FOUND);
         }
 
-        if ($media->getUser()->getId() !== $user->getId() && !$this->isGranted('ROLE_ADMIN') && !$this->isGranted('ROLE_MODERATOR')) {
+        if ($media->getUser()->getEmail() !== $user->getUserIdentifier() && !$this->isGranted('ROLE_ADMIN') && !$this->isGranted('ROLE_MODERATOR')) {
             return new JsonResponse(['message'=>'Access Denied'], Response::HTTP_FORBIDDEN);
         }
 
@@ -262,6 +318,17 @@ class MediaController extends AbstractController
             $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $media->getFileName() . $extension);
             return $response;
     }
+
+    /**
+     * @Route("/media/{id}", name="get_media", methods={"GET"})
+     * @OA\Get(
+     *     path="/media/{id}",
+     *     summary="Get details of a specific media file",
+     *     @OA\Parameter(name="id", in="path", description="Media file ID", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Media details", @OA\JsonContent(ref=@Model(type=App\Entity\Media::class, groups={"media_read"}))),
+     *     @OA\Response(response=403, description="Access denied")
+     * )
+     */
 
     #[Route('/media/download-multiple', name: 'download_multiple', methods: ['POST'])]
     public function downloadMultipleMedia(Request $request, EntityManagerInterface $em): Response
@@ -286,6 +353,21 @@ class MediaController extends AbstractController
         }
         return $this->downloadMultipleFiles($files);
     }
+
+    /**
+     * @Route("/media/list", name="list_media", methods={"GET"})
+     * @OA\Get(
+     *     path="/media/list",
+     *     summary="List media files with pagination",
+     *     @OA\Parameter(name="page", in="query", description="Page number", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Paginated list of media files",
+     *         @OA\JsonContent(type="object", @OA\Property(property="data", type="array", @OA\Items(ref=@Model(type=App\Entity\Media::class, groups={"media_read"}))))
+     *     ),
+     *     @OA\Response(response=403, description="Access denied")
+     * )
+     */
 
     public function downloadMultipleFiles(array $files): Response
     {
@@ -343,6 +425,18 @@ class MediaController extends AbstractController
         }
     }
 
+    /**
+     * @Route("/media/{id}/delete", name="delete_media", methods={"DELETE"})
+     * @OA\Delete(
+     *     path="/media/{id}/delete",
+     *     summary="Delete a media file",
+     *     @OA\Parameter(name="id", in="path", description="Media file ID", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Media deleted successfully"),
+     *     @OA\Response(response=404, description="Media not found"),
+     *     @OA\Response(response=403, description="Access denied")
+     * )
+     */
+
     #[Route('/media/{id}/delete', name: 'delete_media', methods: ['DELETE'])]
     public function deleteMedia(EntityManagerInterface $em, Media $media,MessageBusInterface $messageBus): JsonResponse
     {
@@ -376,6 +470,27 @@ class MediaController extends AbstractController
 
        return new JsonResponse(['message' => 'You are not allowed to delete this file'], 403);
     }
+
+    /**
+     * @Route("/medias/upload", name="upload_media", methods={"POST"})
+     * @OA\Post(
+     *     path="/medias/upload",
+     *     summary="Upload a new media file",
+     *     @OA\RequestBody(
+     *         description="File to upload",
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="file", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="File uploaded successfully"),
+     *     @OA\Response(response=400, description="Invalid file or file too large"),
+     *     @OA\Response(response=403, description="Access denied")
+     * )
+     */
 
     #[Route('/medias/upload', name: 'upload_media', methods: ['POST'])]
     public function uploadMedia(Request $request, EntityManagerInterface $em, SluggerInterface $slugger, MessageBusInterface $messageBus): JsonResponse
@@ -520,6 +635,28 @@ class MediaController extends AbstractController
         return new JsonResponse(['success' => 'file created', 'mediaId' => $media->getId()], Response::HTTP_OK);
 
     }
+
+    /**
+     * @Route("/media/{id}/upload", name="edit_media", methods={"POST"})
+     * @OA\Post(
+     *     path="/media/{id}/upload",
+     *     summary="Upload a new version of an existing media file",
+     *     @OA\Parameter(name="id", in="path", description="Media ID to update", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         description="File to upload as a new version",
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="file", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="New version uploaded successfully"),
+     *     @OA\Response(response=400, description="Invalid file or file too large"),
+     *     @OA\Response(response=403, description="Access denied")
+     * )
+     */
 
 
     private function saveMediaMetadata(Media $media, EntityManagerInterface $em): void
@@ -736,5 +873,24 @@ class MediaController extends AbstractController
 
         return new JsonResponse(["message" => "File Version for " .$originalFile->getFileName() .  " uploaded successfully"], Response::HTTP_OK);
     }
+
+    /**
+     * @Route("/media/download-multiple", name="download_multiple", methods={"POST"})
+     * @OA\Post(
+     *     path="/media/download-multiple",
+     *     summary="Download multiple media files as a zip archive",
+     *     @OA\RequestBody(
+     *         description="List of file IDs to download",
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="files", type="array", @OA\Items(type="integer"))
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="ZIP file containing requested files"),
+     *     @OA\Response(response=404, description="One or more files not found"),
+     *     @OA\Response(response=403, description="Access denied")
+     * )
+     */
 
 }

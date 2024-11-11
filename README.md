@@ -1,7 +1,5 @@
 # RG Media Manager Project Documentation
 
-## Docker Compose File Breakdown
-
 ### 1. Backend (Symfony)
 - **Service Name**: `backend`
 - **Container Name**: `symfony_php`
