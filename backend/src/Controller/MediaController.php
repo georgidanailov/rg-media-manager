@@ -322,23 +322,25 @@ class MediaController extends AbstractController
     public function getMediaById(EntityManagerInterface $em, Media $m): JsonResponse
     {
         $user = $this->getUser();
-        $criteria = [];
+        if ($this->isGranted('ROLE_ADMIN') || $this->isGranted('ROLE_MODERATOR') || ($user && $user->getId() === $m->getUser()->getId())) {
 
-        if ($this->isGranted('ROLE_ADMIN')) {
-            $media = $em->getRepository(Media::class)->findOneBy(['id' => $m->getId()]);
-        } elseif ($this->isGranted('ROLE_MODERATOR')) {
-
-            $media = $em->getRepository(Media::class)->findOneBy(['id' => $m->getId()]);
-        } else {
-            if ($user->getId() === $m->getUser()->getId()) {
-                $media = $em->getRepository(Media::class)->findOneBy(['id' => $m->getId()]);
-
-            }else{
-                return new JsonResponse(['error' => 'You are not authorized to access this page.'], 403);
+            // Check if the media item has a parent and fetch versions if it does
+            $versions = [];
+            if ($m->getParent() !== null) {
+                $parentId = $m->getParent()->getId();
+                $versions = $em->getRepository(Media::class)->findBy(['parent' => $parentId]);
             }
-        }
 
-        return $this->json($media, 200, [], ['groups' => ['media_read']]);
+            // Prepare the response data
+            $responseData = [
+                'media' => $m,
+                'versions' => $versions,
+            ];
+
+            return $this->json($responseData, 200, [], ['groups' => ['media_read']]);
+        } else {
+            return new JsonResponse(['error' => 'You are not authorized to access this page.'], 403);
+        }
     }
 
     #[Route('/media/{id}/delete', name: 'delete_media', methods: ['DELETE'])]
@@ -509,9 +511,9 @@ class MediaController extends AbstractController
 
         $this->activityLogger->logActivity('file_upload', [
             'user_id' => $user->getId(),
-            'file_name' => $media->getFilename(),
-            'file_size' => $media->getFileSize(),
-            'file_type' => $media->getFileType()->value,
+            'email' => $user->getEmail(),
+            'ip_address' => $request->getClientIp(),
+            'user_agent' => $request->headers->get('User-Agent'),
             'timestamp' => (new \DateTime())->format('Y-m-d H:i:s'),
         ]);
 
@@ -585,9 +587,9 @@ class MediaController extends AbstractController
 
 
     #[Route('/media/{id}/upload', name: 'edit_media', methods: ['POST'])]
-    public function uploadNewMediaVersion(Request $request, EntityManagerInterface $em, Media $media, MessageBusInterface $messageBus, SluggerInterface $slugger): JsonResponse
+    public function uploadNewMediaVersion(Request $request, EntityManagerInterface $em, $id, MessageBusInterface $messageBus, SluggerInterface $slugger): JsonResponse
     {
-        $originalFile = $em->getRepository(Media::class)->find($media->getId());
+        $originalFile = $em->getRepository(Media::class)->find($id);
         $user = $this->getUser();
 
         $storageUser = $originalFile->getUser();
@@ -699,10 +701,22 @@ class MediaController extends AbstractController
         $newVersionFile->setCreatedAt(new \DateTime('now'));
         $newVersionFile->setFileSize($newFile->getSize());
         $newVersionFile->setVersion($originalFile->getVersion() + 1);
-        $newVersionFile->setParent($originalFile->getParent());
+        if ($originalFile->getParent()==null) {
+            $newVersionFile->setParent($originalFile);
+        }else {
+            $newVersionFile->setParent($originalFile->getParent()->getId());
+
+        }
         $newVersionFile->setCurrentVersion(true);
-        if ($fileType === FileType::IMAGE || $fileType === FileType::VIDEO) {
+        if ($fileType === FileType::IMAGE ) {
             $newVersionFile->setThumbnailPath('/uploads/thumbnails/' . $newFilename);
+        }elseif ($fileType === FileType::VIDEO){
+            $thumbnailFilename = pathinfo($newFilename, PATHINFO_FILENAME) . '.jpg';
+            $newVersionFile->setThumbnailPath('/uploads/thumbnails/' . $thumbnailFilename);
+        }
+        else if ($fileType === FileType::VIDEO) {
+            $thumbnailFilename = pathinfo($newFilename, PATHINFO_FILENAME) . '.jpg';
+            $newVersionFile->setThumbnailPath('/uploads/thumbnails/' . $thumbnailFilename);
         }
         $originalFile->setCurrentVersion(false);
         try {

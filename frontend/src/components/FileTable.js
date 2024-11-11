@@ -12,7 +12,7 @@ if (token){
 else {
     console.log('no token found');
 }
-const FileTable = ({ files, onDeleteSuccess }) => {
+const FileTable = ({ files, onDeleteSuccess, onViewDetails }) => {
 
     const [selectedFiles, setSelectedFiles] = useState({});
 
@@ -172,7 +172,7 @@ const FileTable = ({ files, onDeleteSuccess }) => {
                             <td>{file.fileVersions}</td>
                             ) : null}
                             <td>
-                                <button className="btn btn-success btn-sm me-2" >Edit</button>
+                                <button className="btn btn-success btn-sm me-2" onClick={() => onViewDetails(file.id)} >View</button>
                                 <button className="btn btn-danger btn-sm me-2" onClick={() => onDelete(file.id)}>Delete</button>
                                 <button
                                     onClick={() => onDownload(file.id, file.name, file.extension)}
