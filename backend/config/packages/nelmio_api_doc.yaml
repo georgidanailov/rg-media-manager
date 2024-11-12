@@ -4,6 +4,49 @@ nelmio_api_doc:
             title: "Media Manager API"
             description: "This is the API documentation for the Media Manager service."
             version: "1.0.0"
+        components:
+            securitySchemes:
+                Bearer:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
+            schemas:
+                Media:
+                    type: object
+                    properties:
+                        id:
+                            type: integer
+                            description: "Unique identifier for the media file"
+                        fileName:
+                            type: string
+                            description: "Original file name"
+                        fileSize:
+                            type: integer
+                            description: "Size of the file in bytes"
+                        fileType:
+                            type: string
+                            description: "Type of the file (e.g., image, video, document)"
+                        createdAt:
+                            type: string
+                            format: date-time
+                            description: "Timestamp when the media was created"
+                        tags:
+                            type: array
+                            items:
+                                type: string
+                                description: "Tags associated with the media file"
+                        user:
+                            type: object
+                            properties:
+                                id:
+                                    type: integer
+                                    description: "User ID of the file owner"
+                                name:
+                                    type: string
+                                    description: "Name of the file owner"
+                    description: "Media file schema representing a file uploaded by a user"
+        security:
+            - Bearer: []
         paths:
             /login:
                 post:
@@ -46,7 +89,6 @@ nelmio_api_doc:
                                             $ref: '#/components/schemas/Media'
                         '403':
                             description: "Access denied"
-
             /media/filter:
                 get:
                     tags: ["Media"]
@@ -88,45 +130,105 @@ nelmio_api_doc:
                                             $ref: '#/components/schemas/Media'
                         '403':
                             description: "Access denied"
-
-            # More paths here ...
-
-        components:
-            schemas:
-                Media:
-                    type: object
-                    properties:
-                        id:
-                            type: integer
-                            description: "Unique identifier for the media file"
-                        fileName:
-                            type: string
-                            description: "Original file name"
-                        fileSize:
-                            type: integer
-                            description: "Size of the file in bytes"
-                        fileType:
-                            type: string
-                            description: "Type of the file (e.g., image, video, document)"
-                        createdAt:
-                            type: string
-                            format: date-time
-                            description: "Timestamp when the media was created"
-                        tags:
-                            type: array
-                            items:
-                                type: string
-                                description: "Tags associated with the media file"
-                        user:
-                            type: object
-                            properties:
-                                id:
-                                    type: integer
-                                    description: "User ID of the file owner"
-                                name:
-                                    type: string
-                                    description: "Name of the file owner"
-                    description: "Media file schema representing a file uploaded by a user"
+            /media/{id}:
+                get:
+                    tags: ["Media"]
+                    summary: "Get details of a specific media file"
+                    parameters:
+                        - name: id
+                          in: path
+                          required: true
+                          description: "Media file ID"
+                          schema:
+                              type: integer
+                    responses:
+                        '200':
+                            description: "Media details"
+                            content:
+                                application/json:
+                                    schema:
+                                        $ref: '#/components/schemas/Media'
+                        '403':
+                            description: "Access denied"
+            /media/{id}/download:
+                get:
+                    tags: ["Media"]
+                    summary: "Download a media file"
+                    parameters:
+                        - name: id
+                          in: path
+                          required: true
+                          description: "Media file ID"
+                          schema:
+                              type: integer
+                    responses:
+                        '200':
+                            description: "File downloaded successfully"
+                        '404':
+                            description: "File not found"
+                        '403':
+                            description: "Access denied"
+            /media/{id}/delete:
+                delete:
+                    tags: ["Media"]
+                    summary: "Delete a media file"
+                    parameters:
+                        - name: id
+                          in: path
+                          required: true
+                          description: "Media file ID"
+                          schema:
+                              type: integer
+                    responses:
+                        '200':
+                            description: "Media deleted successfully"
+                        '404':
+                            description: "Media not found"
+                        '403':
+                            description: "Access denied"
+            /medias/upload:
+                post:
+                    tags: ["Media"]
+                    summary: "Upload a new media file"
+                    requestBody:
+                        content:
+                            multipart/form-data:
+                                schema:
+                                    type: object
+                                    properties:
+                                        file:
+                                            type: string
+                                            format: binary
+                                            description: "File to upload"
+                    responses:
+                        '200':
+                            description: "File uploaded successfully"
+                        '400':
+                            description: "Invalid file or file too large"
+                        '403':
+                            description: "Access denied"
+            /media/download-multiple:
+                post:
+                    tags: ["Media"]
+                    summary: "Download multiple media files as a zip archive"
+                    requestBody:
+                        content:
+                            application/json:
+                                schema:
+                                    type: object
+                                    properties:
+                                        files:
+                                            type: array
+                                            items:
+                                                type: integer
+                                                description: "File IDs to download"
+                    responses:
+                        '200':
+                            description: "ZIP file containing requested files"
+                        '404':
+                            description: "One or more files not found"
+                        '403':
+                            description: "Access denied"
 
     areas:
         path_patterns: [ '^/api', '^/login', '^/logout', '^/media', '^/medias' ]
