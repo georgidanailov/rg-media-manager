@@ -39,6 +39,33 @@ const FileDetail = ({ fileId, onClose }) => {
         parentId = fileDetails.parent.id;
     }
 
+    const onDownload = async (fileId, fileName) => {
+        try {
+            const response = await axios.get(`http://localhost:9000/media/${fileId}/download`, {
+                responseType: 'blob',
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+            const type = response.data.type
+            const blob = new Blob([response.data], { type: type });
+            const downloadUrl = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = fileName;
+
+            document.body.appendChild(link);
+            link.click();
+
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+
+        } catch (error) {
+            console.error("Download failed:", error);
+        }
+    };
+
     const handleFileChange = (e) => {
         setNewVersion(e.target.files[0]);
     };
@@ -91,6 +118,7 @@ const FileDetail = ({ fileId, onClose }) => {
                     <p><strong>Upload Date:</strong> {fileDetails.created_at.substring(0, 10)}</p>
                     <button
                         className="download-btn"
+                        onClick={() => onDownload(fileDetails.id, fileDetails.file_name)}
                     >
                         Download Current Version
                     </button>
@@ -106,6 +134,7 @@ const FileDetail = ({ fileId, onClose }) => {
                                 on {version.created_at.substring(0, 10)}</p>
                             <button
                                 className="download-btn"
+                                onClick={() => onDownload(version.id, version.file_name)}
                             >
                                 Download Version {version.version}
                             </button>
