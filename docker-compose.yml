@@ -61,7 +61,7 @@ services:
 
   # Mailer
   mailer:
-    image: axllent/mailpit
+    image: axllent/mailpit:latest
     ports:
       - "1025:1025"
       - "8025:8025"
@@ -79,16 +79,20 @@ services:
     networks:
       - app_network
     volumes:
-      - /tmp/clamav_data:/var/lib/clamav  # Anonymous volume within container
+      - clamav_data:/var/lib/clamav/
+
 
   worker:
-    image: rg-media-manager-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: symfony_worker
     command: php bin/console messenger:consume async --time-limit=3600
     depends_on:
       - backend
     volumes:
       - ./backend:/var/www/symfony
+      - clamav_data:/var/lib/clamav/
     networks:
       - app_network
 
